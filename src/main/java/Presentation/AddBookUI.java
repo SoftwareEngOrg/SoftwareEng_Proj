@@ -4,12 +4,13 @@ import java.util.Scanner;
 
 import Service.BookService;
 import Domain.Book;
+import Service.BookServiceAdmin;
 
 public class AddBookUI {
 
     private Scanner cin = new Scanner(System.in);
 
-    public void show(BookService bookService)
+    public void show(BookServiceAdmin bookService)
     {
         System.out.println("\n====== Add Book ======");
 
@@ -29,9 +30,8 @@ public class AddBookUI {
         System.out.println("~~~~~~~~~~");
 
         Book b = new Book(title, author, isbn);
-        bookService.addBook(b);
-
-        System.out.println("Book added!");
+        String result = bookService.addBook(b) ? "Book added!" : "A book with this ISBN already exists!";
+        System.out.println(result);
 
         System.out.println("========================");
 

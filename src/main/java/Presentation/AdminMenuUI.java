@@ -3,13 +3,14 @@ package Presentation;
 import Service.BookService;
 import Service.AdminService;
 import Domain.Book;
+import Service.BookServiceAdmin;
 
 import java.util.Scanner;
 
 public class AdminMenuUI {
 
     private Scanner cin = new Scanner(System.in);
-    private BookService bookService = new BookService();
+    private BookServiceAdmin bookService = new BookServiceAdmin();
 
     public void show(AdminService adminService)
     {
@@ -30,7 +31,7 @@ public class AdminMenuUI {
             System.out.println("=========================");
 
             System.out.print("Choose: ");
-            int choice = Integer.parseInt(cin.nextLine());
+            int choice = getValidIntegerInput();
 
             if(choice == 1)
             {
@@ -52,5 +53,15 @@ public class AdminMenuUI {
         }
 
     }
+    private int getValidIntegerInput() {
+        while (true) {
+            try {
+                return Integer.parseInt(cin.nextLine()); // Try to parse the input as an integer
+            } catch (NumberFormatException e) {
+                System.out.print("Invalid input. Please enter a valid number: ");
+            }
+        }
+    }
+
 
 }
