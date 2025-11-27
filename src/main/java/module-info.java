@@ -3,6 +3,7 @@ module com.example.softwareengproj {
     requires javafx.fxml;
 
 
-    opens com.example.softwareengproj to javafx.fxml;
-    exports com.example.softwareengproj;
+
+    exports Presentation;
+    opens Presentation to javafx.fxml;
 }
