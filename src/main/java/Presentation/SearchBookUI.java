@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import Service.BookService;
 import Domain.Book;
+import Service.InputValidator;
 
 public class SearchBookUI
 {
@@ -21,7 +22,7 @@ public class SearchBookUI
         System.out.println("========================");
 
         System.out.print("Choose: ");
-        int choice = getValidIntegerInput(); // Get validated input
+        int choice = InputValidator.getValidIntegerInput(); // Get validated input
         if(choice == 4)
             return;
 
@@ -53,13 +54,5 @@ public class SearchBookUI
         System.out.println("========================");
 
     }
-    private int getValidIntegerInput() {
-        while (true) {
-            try {
-                return Integer.parseInt(cin.nextLine()); // Try to parse input as integer
-            } catch (NumberFormatException e) {
-                System.out.print("Invalid input. Please enter a valid number (1, 2, 3, or 4): ");
-            }
-        }
-    }
+
 }

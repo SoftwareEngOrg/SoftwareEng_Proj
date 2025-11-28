@@ -10,7 +10,7 @@ public class SearchByISBNStrategy implements BookSearchStrategy{
         String q = query.toLowerCase();
 
         return books.stream()
-                .filter(b -> b.getIsbn().toLowerCase().contains(q))
+                .filter(b -> b.getIsbn().toLowerCase().equals(q))
                 .toList();
     }
 }
