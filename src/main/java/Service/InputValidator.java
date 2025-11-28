@@ -6,7 +6,7 @@ public class InputValidator {
     public static int getValidIntegerInput() {
         while (true) {
             try {
-                return Integer.parseInt(cin.nextLine());
+                return Integer.parseInt(cin.nextLine().trim());
             } catch (NumberFormatException e) {
                 System.out.print("Invalid input. Please enter a valid number: ");
             }
