@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class FileLoanRepository {
-    private static final String FILE_PATH = "loans.txt";
+    public static  String FILE_PATH = "loans.txt";
     private final List<Loan> loans = new ArrayList<>();
     private final FileBookRepository bookRepository; // Reuse cached books
 
