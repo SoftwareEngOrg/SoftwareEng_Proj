@@ -1,18 +1,25 @@
 package Service;
 import Domain.Book ;
+import Domain.MediaItem;
+
 import java.io.*;
 import java.util.*;
 
 public class FileBookRepository {
 
     public static String repoPath = "books.txt";
+    private List<Book> cachedBooks = new ArrayList<>();
 
+    public FileBookRepository() {
+        loadBooksFromFile(); // Load once when object is created
+    }
 
     public void saveBook(Book b)
     {
         try(PrintWriter pw = new PrintWriter(new FileWriter(repoPath, true)))
         {
-            pw.println(b.getTitle() + ";" + b.getAuthor() + ";" + b.getIsbn());
+            pw.println(b.getTitle() + ";" + b.getAuthor() + ";" + b.getIsbn() + ";" + b.isAvailable());
+            cachedBooks.add(b);
         }
 
         catch(Exception e)
@@ -21,47 +28,39 @@ public class FileBookRepository {
         }
     }
 
-    public List<Book> searchBooks (String type , String value)
-    {
-        List<Book> result = new ArrayList<>();
-
-        try(BufferedReader br = new BufferedReader(new FileReader(repoPath)))
-        {
-            String line ;
-            while((line = br.readLine()) != null)
-            {
+    private void loadBooksFromFile() {
+        try (BufferedReader br = new BufferedReader(new FileReader(repoPath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
                 String[] p = line.split(";");
-                if(p.length == 3)
-                {
-                    Book b = new Book(p[0], p[1], p[2]);
-
-                    if(type.equals("title") && p[0].contains(value))
-                    {
-                        result.add(b);
-
-                    }
-
-                    if(type.equals("author") && p[1].contains(value))
-                    {
-                        result.add(b);
-
-                    }
-
-                    if(type.equals("isbn") && p[2].equals(value))
-                    {
-                        result.add(b);
-
-                    }
+                if (p.length == 4) {
+                    Book book = new Book(p[0], p[1], p[2]);
+                    book.setAvailable(Boolean.parseBoolean(p[3]));
+                    cachedBooks.add(book);
                 }
             }
-
+        } catch (Exception e) {
+            System.out.println("Error loading books file.");
         }
+    }
+    public List<Book> findAllBooks() {
+        return new ArrayList<>(cachedBooks);
+    }
 
-        catch (Exception e)
-        {
-            System.out.println("Error reading books file.");
+    public void updateBooks(MediaItem item) {
+        for (Book b : cachedBooks) {
+            if(b.getTitle().equals(item.getTitle()) && b.getAuthor().equals(item.getAuthor()))
+            {
+                b.setAvailable(item.isAvailable());
+            }
         }
-        return result ;
+        try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath))) {
+            for (Book b : cachedBooks) {
+                pw.println(b.getTitle() + ";" + b.getAuthor() + ";" + b.getIsbn() + ";" + b.isAvailable());
+            }
+        } catch (Exception e) {
+            System.out.println("Error saving file");
+        }
     }
 
 }

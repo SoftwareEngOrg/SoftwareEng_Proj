@@ -1,31 +1,30 @@
 package Service;
 
-import Domain.User;
 
 public class AdminService {
 
     private boolean loggedIn = false;
-    private FileUserRepository fileUser = new FileUserRepository();
+    private String username,passwowrd;
 
-    public boolean login(String username, String password){
-        User u = fileUser.findUser(username, password);
-
-        if(u != null && u.getRole().equals("admin"))
-        {
-            loggedIn = true;
-            return true;
-        }
-        return false;
+    public void login(String username, String password){
+        this.username = username;
+        this.passwowrd = password;
+        loggedIn = true;
     }
-
-
     public void logout()
     {
         loggedIn = false;
     }
-
     public boolean isLoggedIn()
     {
         return loggedIn;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPasswowrd() {
+        return passwowrd;
     }
 }

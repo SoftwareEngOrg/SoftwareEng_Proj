@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import Service.BookService;
 import Domain.Book;
+import Service.InputValidator;
 
 public class SearchBookUI
 {
@@ -17,10 +18,13 @@ public class SearchBookUI
         System.out.println("1. Title");
         System.out.println("2. Author");
         System.out.println("3. ISBN");
+        System.out.println("4. Go back");
         System.out.println("========================");
 
         System.out.print("Choose: ");
-        int choice = Integer.parseInt(cin.nextLine());
+        int choice = InputValidator.getValidIntegerInput(); // Get validated input
+        if(choice == 4)
+            return;
 
         System.out.print("Enter value: ");
         String value = cin.nextLine();
@@ -31,16 +35,16 @@ public class SearchBookUI
         {
             result = bookService.searchByTitle(value);
         }
-
-        if (choice == 2)
+        else if (choice == 2)
         {
             result = bookService.searchByAuthor(value);
         }
-
-        if (choice == 3)
+        else if (choice == 3)
         {
             result = bookService.searchByISBN(value);
         }
+        else
+            return;
 
         System.out.println("~~~~~~~~~~~~~~~~~~~~");
         System.out.println("Results:");
