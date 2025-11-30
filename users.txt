@@ -1,2 +1,3 @@
-yahya;141186;admin
-ahmad;123;admin
+yahya;141186;admin;yahyajaara1411@gmail.com
+ahmad;123;admin;yahyajaara130@gmail.com
+yousef;123;customer;yousef@123

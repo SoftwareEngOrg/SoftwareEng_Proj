@@ -1,4 +1,3 @@
-Morning Talk;Adham Sharkawi;40
-Messages from the Qur'an;Adham Sharkawi;40
-
-www;ahmad saif;44
+Morning Talk;Adham Sharkawi;40;true
+Messages from the Qur'an;Adham Sharkawi;40;true
+www;ahmad saif;44;true
