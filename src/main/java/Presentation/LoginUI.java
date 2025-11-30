@@ -25,10 +25,11 @@ public class LoginUI {
             System.out.print("Password: ");
             String pass = cin.nextLine();
             User foundUser = userRepo.findUser(user, pass );
-            System.out.println(foundUser.getEmail());
+
 
             if(foundUser != null)
             {
+                System.out.println(foundUser.getEmail());
                 System.out.println("Login successful!");
                 if(foundUser.getRole().equals("admin"))
                 {
@@ -38,6 +39,7 @@ public class LoginUI {
                 }
                 else if(foundUser.getRole().equals("customer"))
                 {
+                    userRepo.updateDate(foundUser);
                     CustomerMenuUI customerMenu = new CustomerMenuUI();
                     customerMenu.show(foundUser);  // Pass the actual User object!
                 }

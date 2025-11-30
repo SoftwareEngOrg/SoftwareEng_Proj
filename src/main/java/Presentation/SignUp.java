@@ -1,6 +1,10 @@
 package Presentation;
 import Domain.User;
 import Service.FileUserRepository;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Scanner;
 
 public class SignUp {
@@ -39,7 +43,15 @@ public class SignUp {
             System.out.println("Sign Up successful!");
             System.out.println("Your username is: " + username);
             System.out.println("Role: customer");
-            User foundUser = new User(username, password, "customer", email);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            String formattedDate = dateFormat.format(new Date());
+            Date currentDate = null;
+            try {
+                 currentDate = dateFormat.parse(formattedDate);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+            User foundUser = new User(username, password, "customer", email,currentDate);
             CustomerMenuUI customerMenu = new CustomerMenuUI();
             customerMenu.show(foundUser);
         } else {

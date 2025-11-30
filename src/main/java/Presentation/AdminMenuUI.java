@@ -26,7 +26,8 @@ public class AdminMenuUI {
             System.out.println("\n====== Admin Menu ======");
             System.out.println("1. Add Book");
             System.out.println("2. Search Book");
-            System.out.println("3. Logout");
+            System.out.println("3. inactive users");
+            System.out.println("4. Logout");
             System.out.println("=========================");
 
             System.out.print("Choose: ");
@@ -43,6 +44,10 @@ public class AdminMenuUI {
             }
             else if (choice == 3)
             {
+                viewInactiveUsers();
+            }
+            else if (choice == 4)
+            {
                 adminService.logout();
                 System.out.println("Logged out!");
                 break;
@@ -51,6 +56,9 @@ public class AdminMenuUI {
 
     }
 
+    private void viewInactiveUsers() {
+
+    }
 
 
 }
