@@ -1,11 +1,13 @@
 package Presentation;
 
+import Domain.User;
 import Service.BookService;
 import Service.AdminService;
 import Domain.Book;
 import Service.BookServiceAdmin;
 import Service.InputValidator;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class AdminMenuUI {
@@ -44,7 +46,8 @@ public class AdminMenuUI {
             }
             else if (choice == 3)
             {
-                viewInactiveUsers();
+                viewInactiveUsersUI();
+
             }
             else if (choice == 4)
             {
@@ -56,9 +59,46 @@ public class AdminMenuUI {
 
     }
 
-    private void viewInactiveUsers() {
+    private void viewInactiveUsersUI() {
+        List<User> inActiveUsers = bookService.viewInactiveUsers();
+        if (inActiveUsers.isEmpty()) {
+            System.out.println("No inactive users found.");
+        } else {
+            System.out.println("\n====== Inactive Users ======");
+            for (User user : inActiveUsers) {
+                System.out.println(user);
+            }
+            System.out.println("=============================");
+        }
 
+        while (true) {
+            System.out.println("\nChoose an option:");
+            System.out.println("1. Unregister all users");
+            System.out.println("2. Unregister a user by username");
+            System.out.println("3. Go back");
+
+            System.out.print("Choose: ");
+            int choice = InputValidator.getValidIntegerInput();
+            if (choice == 1) {
+                bookService.unregisterAllUsers(inActiveUsers);
+                break;
+            }
+            else if (choice == 2) {
+                System.out.print("Enter username to unregister: ");
+                String username = cin.nextLine();
+                bookService.unregisterUserByUsername(username);
+                break;
+            }
+            else if (choice == 3) {
+                break;
+            }
+            else {
+                System.out.println("Invalid choice. Please try again.");
+            }
+        }
     }
+
+
 
 
 }
