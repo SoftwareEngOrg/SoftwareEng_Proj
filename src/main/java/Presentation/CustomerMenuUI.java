@@ -2,6 +2,7 @@ package Presentation;
 
 import Domain.User;
 import Service.BookServiceCustomer;
+import Service.Doenev;
 import Service.InputValidator;
 
 import java.util.Scanner;
@@ -9,10 +10,13 @@ import java.util.Scanner;
 
 public class CustomerMenuUI {
     private final BookServiceCustomer bookService = new BookServiceCustomer();
+    Doenev di = new Doenev();
+
     private final Scanner scanner = new Scanner(System.in);
 
     public void show(User loggedInUser) {
         bookService.setCurrentUser(loggedInUser);
+        bookService.setEmailConfig(di.getUsername() , di.getPassword());
         while (true) {
             System.out.println("\n====== Customer Menu ======");
             System.out.println("1. Browse Available Books");

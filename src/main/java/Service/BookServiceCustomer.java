@@ -6,20 +6,41 @@ import Domain.MediaItem;
 import Domain.User;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BookServiceCustomer extends BookService{
 
     private  FileLoanRepository loanRepository = new FileLoanRepository();
     private  FileBookRepository fileBook = FileBookRepository.getInstance();
     private User currentUser;
+    private Map<String, List<User>> waitList = new HashMap<>();
+
+
+    private String emailUser;
+    private String emailPass;
+
+
 
     public void setCurrentUser(User user) {
         this.currentUser = user;
     }
 
 
+    public BookServiceCustomer(String emailUser, String emailPass) {
+        this.emailUser = emailUser;
+        this.emailPass = emailPass;
+    }
+
     public BookServiceCustomer() {}
+
+    public void setEmailConfig(String emailUser, String emailPass) {
+        this.emailUser = emailUser;
+        this.emailPass = emailPass;
+    }
+
 
     public boolean borrowBook(String isbn)
     {
@@ -41,7 +62,28 @@ public class BookServiceCustomer extends BookService{
 
         if (!item.isAvailable())
         {
-            System.out.println("Sorry, this book is currently borrowed by someone else.");
+            System.out.println("Book is borrowed.");
+            System.out.println("We will notify you by email when it becomes available.");
+
+            if (currentUser.getEmail() == null || currentUser.getEmail().isEmpty()) {
+                System.out.println("Cannot add to waitlist: user email not set.");
+                return false;
+            }
+
+            waitList.putIfAbsent(isbn, new ArrayList<>());
+            waitList.get(isbn).add(currentUser);
+
+            System.out.println("=== DEBUG: currentUser inside BookServiceCustomer ===");
+            System.out.println("Username: " + currentUser.getUsername());
+            System.out.println("Email: " + currentUser.getEmail());
+
+            System.out.println("Emailrrrrrrrrrrrrr: " + emailUser);
+
+
+            EmailService es = new EmailService(this.emailUser, this.emailPass);
+            CustomerObserver observer = new CustomerObserver(currentUser, es);
+            BookInventory.getInstance().addObserver(observer);
+
             return false;
         }
 
@@ -88,6 +130,9 @@ public class BookServiceCustomer extends BookService{
             // No fine - process return immediately
             loanRepository.returnItem(loanId, today);
             System.out.println("Book returned on time. Thank you!");
+
+            // notify all observers
+            BookInventory.getInstance().notifyBookReturned(loan.getMediaItem().getIsbnOrId());
             return true;
         }
     }
@@ -102,6 +147,9 @@ public class BookServiceCustomer extends BookService{
 
         loanRepository.returnItem(loanId, today);
         System.out.println("Fine paid. Book returned successfully!");
+
+        // notify all observers
+        BookInventory.getInstance().notifyBookReturned(loan.getMediaItem().getIsbnOrId());
         return true;
     }
 

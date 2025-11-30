@@ -24,7 +24,8 @@ public class LoginUI {
             String user = cin.nextLine();
             System.out.print("Password: ");
             String pass = cin.nextLine();
-            User foundUser = userRepo.findUser(user, pass);
+            User foundUser = userRepo.findUser(user, pass );
+            System.out.println(foundUser.getEmail());
 
             if(foundUser != null)
             {

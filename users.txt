@@ -1,3 +1,6 @@
 yahya;141186;admin;s12240366@stu.najah.edu
 ahmad;123;admin;yahyajaara1411@gmail.com
-yousef;123;customer;yousef@123
+yousef;123;customer;yahyajaara1411@gmail.com
+omar;123;customer;yahyajaara130@gmail.com
+mohammad;123;customer;emadabrar13@gmail.com
+saif;123;customer;seifahmad6363@gmail.com

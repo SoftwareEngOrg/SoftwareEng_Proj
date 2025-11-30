@@ -2,6 +2,7 @@ package Service;
 import Domain.Book;
 import Domain.Loan;
 import Domain.User;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,7 +45,7 @@ public class BookServiceCustomerTest {
         book = new Book("Java Basics", "Author Name", "ISBN12345");
         book.setAvailable(true);
 
-        Loan fakeLoan = new Loan("L100", user, book, LocalDate.now());
+        fakeLoan = new Loan("L100", user, book, LocalDate.now());
 
         bookServiceCustomer.setCurrentUser(user);
 
