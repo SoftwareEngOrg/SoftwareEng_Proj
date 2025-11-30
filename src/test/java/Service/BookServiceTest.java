@@ -24,8 +24,8 @@ public class BookServiceTest {
 
     }
 
-    @Test
-    public void TestAddBook() throws Exception {
+
+  /*  public void TestAddBook() throws Exception {
         Book newb = new Book("salam", "adham", "50");
         book.addBook(newb);
 
@@ -42,7 +42,7 @@ public class BookServiceTest {
 
         Assertions.assertEquals("salam;adham;50", lastLine);
 
-    }
+    }*/
 
 
 

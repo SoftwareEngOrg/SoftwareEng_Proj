@@ -1,36 +1,34 @@
 package Domain;
 
-public class Book {
+import javax.print.attribute.standard.Media;
 
-private String title;
-private String author;
-private String isbn;
+public class Book extends MediaItem {
 
-public Book(String title, String author, String isbn)
-{
-    this.title = title;
-    this.author = author;
-    this.isbn = isbn;
+    private String isbn;
 
-}
-
-    public String getTitle() {
-        return title;
+    public Book(String title, String author, String isbn) {
+        super(title, author); // Call the constructor of MediaItem
+        this.isbn = isbn;
     }
 
-    public String getAuthor() {
-        return author;
-    }
 
     public String getIsbn() {
         return isbn;
     }
+    @Override
+    public int getBorrowingPeriodDays() {
+        return 28;
+    }
 
+    @Override
+    public int getFinePerDay() {
+        return 10;
+    }
 
     @Override
     public String toString()
     {
-        return ("Title:" + title + " | " + "Author:" + author + " | " + "Isbn:" + isbn);
+        return ("Title:" + this.getTitle() + " | " + "Author:" + getAuthor() + " | " + "Isbn:" + isbn + " | " + isAvailable());
     }
 
 }

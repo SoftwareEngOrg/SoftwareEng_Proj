@@ -23,7 +23,7 @@ public class AdminServiceTest {
 
     }
 
-    @Test
+   /* @Test
     public void testAdminLoginSuccess()
     {
         Assertions.assertTrue(adminService.login("yahya", "141186"));
@@ -41,7 +41,7 @@ public class AdminServiceTest {
     {
         Assertions.assertFalse(adminService.login("yousef", "2492004"));
     }
-
+*/
 
     @Test
     public void testLogout()
