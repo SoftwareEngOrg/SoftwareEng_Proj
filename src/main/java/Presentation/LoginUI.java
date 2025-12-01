@@ -46,6 +46,7 @@ public class LoginUI {
                 else if(foundUser.getRole().equals("librarian"))
                 {
                     System.out.println("Welcome, Librarian " + foundUser.getUsername() + "!");
+                    userRepo.updateDate(foundUser);
                     new LibrarianMenuUI().show();  // This is the new menu
                 }
                 nonvalidUser = false;
