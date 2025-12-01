@@ -90,7 +90,15 @@ public class AdminMenuUI {
             else if (choice == 2) {
                 System.out.print("Enter username to unregister: ");
                 String username = cin.nextLine();
-                bookService.unregisterUserByUsername(username);
+                for(User user:inActiveUsers)
+                {
+                    if(user.getUsername().equals(username))
+                    {
+                        bookService.unregisterUserByUsername(username);
+                        break;
+                    }
+                }
+                System.out.print("this user you are trying to unregister is ACTIVE!!");
                 break;
             }
             else if (choice == 3) {
