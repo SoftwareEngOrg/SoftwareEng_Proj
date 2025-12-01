@@ -16,7 +16,6 @@ public class FileBookRepository {
         loadBooksFromFile(); // Load once when object is created
     }
 
-
     public static synchronized FileBookRepository getInstance() {
         if (instance == null) {
             instance = new FileBookRepository();
@@ -33,6 +32,7 @@ public class FileBookRepository {
             System.out.println("Error writing to books file.");
         }
     }
+
 
 
     private void loadBooksFromFile() {
@@ -60,12 +60,16 @@ public class FileBookRepository {
 
     public void updateBooks(MediaItem item) {
         for (Book b : cachedBooks) {
-            if (b.getTitle().equals(item.getTitle()) && b.getAuthor().equals(item.getAuthor())) {
+            if (b.getIsbn().equals(item.getIsbnOrId())) {
                 b.setAvailable(item.isAvailable());
+                b.setTitle(item.getTitle());
+                b.setAuthor(item.getAuthor());
             }
         }
         saveAllBooksToFile();
     }
+
+
 
 
     private void saveAllBooksToFile() {

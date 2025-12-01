@@ -42,7 +42,7 @@ public class BookServiceCustomerTest {
 
         user = new User("sami" , "123" , "customer");
 
-        book = new Book("Java Basics", "Author Name", "ISBN12345");
+        book = new Book("Java Basics", "Author Name", "12345");
         book.setAvailable(true);
 
         fakeLoan = new Loan("L100", user, book, LocalDate.now());
@@ -52,14 +52,14 @@ public class BookServiceCustomerTest {
     }
 
 
-
     @Test
     void borrowBook_success()
     {
+        // I have a user in bookCustomerService sami
         when(mockBookRepo.findAllBooks()).thenReturn(List.of(book));
         when(mockLoanRepo.getActiveLoansForUser("sami")).thenReturn(List.of());
         when(mockLoanRepo.borrowItem(any(), any())).thenReturn(fakeLoan);
-        boolean result = bookServiceCustomer.borrowMediaItem("ISBN12345");
+        boolean result = bookServiceCustomer.borrowMediaItem("12345");
         assertTrue(result);
         verify(mockLoanRepo, times(1)).borrowItem(user, book);
     }
@@ -141,18 +141,31 @@ public class BookServiceCustomerTest {
     }
 
     @Test
-    public void testCompleteReturn_WithFinePaid() {
+    public void testCompleteReturn_WithFinePaid() throws Exception {
 
-        LocalDate borrowDate = LocalDate.now().minusDays(30);
-        fakeLoan = new Loan("L100", user, book, borrowDate);
+        fakeLoan = new Loan("L100", user, book, LocalDate.now().minusDays(10));
+
 
         when(mockLoanRepo.findLoanById("L100")).thenReturn(fakeLoan);
+        when(mockLoanRepo.returnItem(eq("L100"), any(LocalDate.class))).thenAnswer(inv -> {
+            LocalDate today = inv.getArgument(1, LocalDate.class);
+            fakeLoan.returnItem(today);
+            return true;
+        });
+
 
         boolean result = bookServiceCustomer.completeReturn("L100");
-        assertTrue(result);
 
-        verify(mockLoanRepo, times(1)).returnItem(eq("L100"), any(LocalDate.class));
+
+        assertTrue(result);
+        assertNotNull(fakeLoan.getReturnDate());
     }
+
+
+
+
+
+
 
 
 

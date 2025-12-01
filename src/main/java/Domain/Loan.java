@@ -41,6 +41,9 @@ public class Loan {
         this.mediaItem.setAvailable(true);
     }
 
+
+
+
     // Getters
     public String getLoanId() { return loanId; }
     public User getUser() { return user; }

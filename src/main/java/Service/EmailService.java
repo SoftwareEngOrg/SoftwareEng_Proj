@@ -9,6 +9,7 @@ public class EmailService {
     private final String username;
     private final String password;
 
+
     public EmailService(String username, String password) {
         this.username = username;
         this.password = password;
@@ -47,5 +48,8 @@ public class EmailService {
             System.out.println("EMAIL FAILED: " + e.getMessage());
             e.printStackTrace();
         }
+
+
+
     }
 }

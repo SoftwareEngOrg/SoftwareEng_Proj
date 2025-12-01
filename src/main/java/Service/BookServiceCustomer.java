@@ -39,6 +39,11 @@ public class BookServiceCustomer extends BookService{
         this.emailPass = emailPass;
     }
 
+
+
+
+
+
     public boolean borrowMediaItem(String isbn) {
         if (currentUser == null) {
             System.out.println("Error: User not logged in.");
@@ -92,6 +97,12 @@ public class BookServiceCustomer extends BookService{
     }
 
 
+
+
+
+
+
+
     public boolean returnBook(String loanId) {
         LocalDate today = LocalDate.now();
         Loan loan = loanRepository.findLoanById(loanId);
@@ -121,6 +132,7 @@ public class BookServiceCustomer extends BookService{
             return true;
         }
     }
+
     public boolean completeReturn(String loanId) {
         LocalDate today = LocalDate.now();
         Loan loan = loanRepository.findLoanById(loanId);
@@ -208,6 +220,7 @@ public class BookServiceCustomer extends BookService{
         }
     }
 
+
     public List<Book> getAllAvailableBooks() {
         return fileBook.findAllBooks().stream()
                 .filter(MediaItem::isAvailable)
@@ -233,6 +246,7 @@ public class BookServiceCustomer extends BookService{
         }
         return null;
     }
+
     public String generateLoanReport() {
         if (currentUser == null) {
             return "Not logged in.";

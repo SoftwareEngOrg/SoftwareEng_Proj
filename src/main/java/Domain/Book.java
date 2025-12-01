@@ -25,10 +25,17 @@ public class Book extends MediaItem {
         return 10;
     }
 
-    @Override
+  /*  @Override
     public String toString()
     {
         return ("Title:" + this.getTitle() + " | " + "Author:" + getAuthor() + " | " + "Isbn:" + isbn + " | " + isAvailable());
+    }*/
+
+
+    @Override
+    public String toString() {
+        return ("Title:" + this.getTitle() + " | " + "Author:" + this.getAuthor() + " | " + "Isbn:" + this.isbn + " | " + (this.isAvailable() ? "Available" : "Borrowed"));
     }
+
 
 }
