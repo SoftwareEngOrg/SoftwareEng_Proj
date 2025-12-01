@@ -30,7 +30,7 @@ public class AddBookUI {
         System.out.println("~~~~~~~~~~");
 
         Book b = new Book(title, author, isbn);
-        String result = bookService.addBook(b) ? "Book added!" : "A book with this ISBN already exists!";
+        String result = bookService.addBook(b) ? "Book added!" : "A book or CD with this ISBN already exists!";
         System.out.println(result);
 
         System.out.println("========================");

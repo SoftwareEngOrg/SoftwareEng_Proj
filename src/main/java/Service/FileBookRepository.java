@@ -81,5 +81,12 @@ public class FileBookRepository {
     public void reloadBooks() {
         loadBooksFromFile();
     }
+    public Book findByIsbn(String isbn) {
+        return findAllBooks().stream()
+                .filter(book -> book.getIsbn().equalsIgnoreCase(isbn.trim()))
+                .findFirst()
+                .orElse(null);
+    }
+
 
 }

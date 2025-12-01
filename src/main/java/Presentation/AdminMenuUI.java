@@ -27,9 +27,10 @@ public class AdminMenuUI {
         {
             System.out.println("\n====== Admin Menu ======");
             System.out.println("1. Add Book");
-            System.out.println("2. Search Book");
-            System.out.println("3. inactive users");
-            System.out.println("4. Logout");
+            System.out.println("2. Add CD");
+            System.out.println("3. Search Book");
+            System.out.println("4. inactive users");
+            System.out.println("5. Logout");
             System.out.println("=========================");
 
             System.out.print("Choose: ");
@@ -39,17 +40,20 @@ public class AdminMenuUI {
             {
                 new AddBookUI().show(bookService);
             }
-
-            else if (choice == 2)
+            else if(choice == 2)
+            {
+                new AddCDUI().show(bookService);
+            }
+            else if (choice == 3)
             {
                 new SearchBookUI().show(bookService);
             }
-            else if (choice == 3)
+            else if (choice == 4)
             {
                 viewInactiveUsersUI();
 
             }
-            else if (choice == 4)
+            else if (choice == 5)
             {
                 adminService.logout();
                 System.out.println("Logged out!");

@@ -21,8 +21,10 @@ public abstract class MediaItem {
     public String getIsbnOrId() {
         if (this instanceof Book book) {
             return book.getIsbn();
+        } else if (this instanceof CD cd) {
+            return cd.getIsbn();
         }
-        return "UNKNOWN-" + hashCode(); // fallback
+        return "UNKNOWN-" + hashCode();
     }
     @Override
     public String toString() {
