@@ -20,6 +20,8 @@ public class BookServiceCustomer extends BookService{
     private String emailUser;
     private String emailPass;
 
+    private static BookServiceCustomer instance;
+
 
 
     public void setCurrentUser(User user) {
@@ -38,9 +40,6 @@ public class BookServiceCustomer extends BookService{
         this.emailUser = emailUser;
         this.emailPass = emailPass;
     }
-
-
-
 
 
 
@@ -70,7 +69,7 @@ public class BookServiceCustomer extends BookService{
             waitList.get(isbn).add(currentUser);
 
             EmailService es = new EmailService(this.emailUser, this.emailPass);
-            CustomerObserver observer = new CustomerObserver(currentUser, es);
+            CustomerObserver observer = new CustomerObserver(currentUser, es, this);
             BookInventory.getInstance().addObserver(observer);
 
             return false;
