@@ -59,7 +59,7 @@ public class BookServiceCustomerTest {
         when(mockBookRepo.findAllBooks()).thenReturn(List.of(book));
         when(mockLoanRepo.getActiveLoansForUser("sami")).thenReturn(List.of());
         when(mockLoanRepo.borrowItem(any(), any())).thenReturn(fakeLoan);
-        boolean result = bookServiceCustomer.borrowBook("ISBN12345");
+        boolean result = bookServiceCustomer.borrowMediaItem("ISBN12345");
         assertTrue(result);
         verify(mockLoanRepo, times(1)).borrowItem(user, book);
     }
@@ -67,7 +67,7 @@ public class BookServiceCustomerTest {
     @Test
     public void testBorrowBook_NoUser() {
         bookServiceCustomer.setCurrentUser(null);
-        boolean result = bookServiceCustomer.borrowBook("ISBN12345");
+        boolean result = bookServiceCustomer.borrowMediaItem("ISBN12345");
         assertFalse(result);
     }
 
@@ -76,7 +76,7 @@ public class BookServiceCustomerTest {
     public void testBorrowBook_BookNotFound()
     {
         when(mockBookRepo.findAllBooks()).thenReturn(List.of());
-        boolean result = bookServiceCustomer.borrowBook("ISBN12345");
+        boolean result = bookServiceCustomer.borrowMediaItem("ISBN12345");
         assertFalse(result);
     }
 
@@ -86,7 +86,7 @@ public class BookServiceCustomerTest {
     {
         book.setAvailable(false);
         when(mockBookRepo.findAllBooks()).thenReturn(List.of(book));
-        boolean result = bookServiceCustomer.borrowBook("ISBN12345");
+        boolean result = bookServiceCustomer.borrowMediaItem("ISBN12345");
         assertFalse(result);
     }
 

@@ -47,6 +47,12 @@ class MediaItemTest {
         Book realBook = new Book("Clean Code", "Robert", "978");
         assertEquals("978", realBook.getIsbnOrId());
     }
+    @Test
+    @DisplayName("getIsbnOrId returns ISBN when instance is Book")
+    void getIsbnOrId_whenCD_returnsIsbn() {
+        CD realBook = new CD("Clean Code", "Robert", "978");
+        assertEquals("978", realBook.getIsbnOrId());
+    }
 
     @Test
     @DisplayName("getIsbnOrId returns fallback when not Book")
@@ -68,5 +74,15 @@ class MediaItemTest {
         assertTrue(str.contains("Java Guide"));
         assertTrue(str.contains("Ahmed"));
         assertTrue(str.contains("Available"));
+    }
+    @Test
+    @DisplayName("toString contains class name, title, author and availability but borrowed")
+    void toString_containsAllInfo_Borrowed() {
+        item.setAvailable(false);
+        String str = item.toString();
+        assertTrue(str.contains("TestBook"));
+        assertTrue(str.contains("Java Guide"));
+        assertTrue(str.contains("Ahmed"));
+        assertTrue(str.contains("Borrowed"));
     }
 }
