@@ -15,7 +15,6 @@ public class SignUp {
     public void show() {
         System.out.println("======== Sign Up ========");
 
-
         String username;
         while (true) {
             System.out.print("Enter your username: ");
@@ -36,21 +35,22 @@ public class SignUp {
         System.out.print("Enter your password: ");
         String password = scanner.nextLine();
 
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String formattedDate = dateFormat.format(new Date());
 
-        boolean success = repo.addUser(username, password, email);
+        Date currentDate = null;
+        try {
+            currentDate = dateFormat.parse(formattedDate);
+            System.out.println(dateFormat.format(currentDate));
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        boolean success = repo.addUser(username, password, email,currentDate);
 
         if (success) {
             System.out.println("Sign Up successful!");
             System.out.println("Your username is: " + username);
             System.out.println("Role: customer");
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            String formattedDate = dateFormat.format(new Date());
-            Date currentDate = null;
-            try {
-                 currentDate = dateFormat.parse(formattedDate);
-            } catch (ParseException e) {
-                throw new RuntimeException(e);
-            }
             User foundUser = new User(username, password, "customer", email,currentDate);
             CustomerMenuUI customerMenu = new CustomerMenuUI();
             customerMenu.show(foundUser);

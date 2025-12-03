@@ -16,9 +16,6 @@ public class LoginUI {
     {
         boolean nonvalidUser = true;
 
-
-
-
         while (nonvalidUser)
         {
             System.out.println();

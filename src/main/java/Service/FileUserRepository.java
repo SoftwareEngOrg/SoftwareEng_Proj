@@ -41,7 +41,7 @@ public class FileUserRepository {
     }
 
 
-    public boolean addUser(String username, String password, String email) {
+    public boolean addUser(String username, String password, String email,Date current) {
 
         if (isUsernameExists(username)) {
             System.out.println("Username already exists!");
@@ -51,7 +51,11 @@ public class FileUserRepository {
         String role = "customer";
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(repoPath, true))) {
-            bw.write(username + ";" + password + ";" + role + ";" + email);
+
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            String formattedDate = df.format(current);
+
+            bw.write(username + ";" + password + ";" + role + ";" + email+";"+formattedDate);
             bw.newLine();
             return true;
         } catch (IOException e) {

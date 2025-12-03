@@ -12,7 +12,7 @@ public class User {
     private String email;
     private Date lastLoginDate;
 
-    private final AtomicBoolean hasNewNotification = new AtomicBoolean(false);  // Thread-safe
+
 
 
     public User(String username , String password , String role , String email,Date lastLoginDate)
@@ -69,13 +69,6 @@ public class User {
         }
     }
 
-    public boolean hasNewNotification() {
-        return hasNewNotification.get();
-    }
-
-    public void setHasNewNotification(boolean value) {
-        hasNewNotification.set(value);
-    }
 
     @Override
     public String toString()
