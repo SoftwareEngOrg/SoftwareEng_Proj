@@ -45,6 +45,7 @@ public class CustomerObserver implements BookObserver {
                         "\nTitle: \"" + title + "\" (ID: " + id + ")" +
                         "\n\nYou can borrow it now.";
 
-        emailService.sendEmail(user.getEmail(), subject, body);
+        emailService.sendEmailAsync(user.getEmail(), subject, body);
+
     }
 }

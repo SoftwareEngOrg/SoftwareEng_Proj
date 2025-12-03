@@ -30,7 +30,8 @@ public class AdminMenuUI {
             System.out.println("2. Add CD");
             System.out.println("3. Search Book");
             System.out.println("4. inactive users");
-            System.out.println("5. Logout");
+            System.out.println("5. Reminding ");
+            System.out.println("6. Logout");
             System.out.println("=========================");
 
             System.out.print("Choose: ");
@@ -53,7 +54,14 @@ public class AdminMenuUI {
                 viewInactiveUsersUI();
 
             }
+
             else if (choice == 5)
+            {
+                viewInactiveUsersUI();
+
+            }
+
+            else if (choice == 6)
             {
                 adminService.logout();
                 System.out.println("Logged out!");

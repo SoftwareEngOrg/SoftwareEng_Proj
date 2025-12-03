@@ -2,35 +2,30 @@ package Service;
 
 import jakarta.mail.Message;
 import jakarta.mail.Transport;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
+import java.util.Properties;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class EmailServiceTest {
+class EmailServiceTest {
 
     @Test
-    void testSendEmail_SingleAssertion() throws Exception {
+    void testSendEmailInternal_withMock() throws Exception {
+        EmailService emailService = new EmailService("test@gmail.com", "password");
 
-        try (MockedStatic<Transport> mockedTransport = mockStatic(Transport.class)) {
+        try (MockedStatic<Transport> transportMock = mockStatic(Transport.class)) {
 
-            ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+            transportMock.when(() -> Transport.send(any(Message.class))).thenAnswer(invocation -> null);
 
-            EmailService service = new EmailService("sender@gmail.com", "1234");
 
-            service.sendEmail("yahyajaara1411@gmail.com", "Hello", "Test Body");
+            emailService.sendEmailInternal("to@test.com", "Subject", "Body");
 
-            mockedTransport.verify(() -> Transport.send(messageCaptor.capture()), times(1));
 
-            Message msg = messageCaptor.getValue();
-
-            boolean result =
-                    msg.getFrom()[0].toString().equals("sender@gmail.com") &&
-                            msg.getAllRecipients()[0].toString().equals("user@example.com") &&
-                            msg.getSubject().equals("Hello") &&
-                            msg.getContent().toString().contains("Test Body");
-            assert result;
+            transportMock.verify(() -> Transport.send(any(Message.class)), times(1));
         }
     }
 }

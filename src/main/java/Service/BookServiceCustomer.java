@@ -68,6 +68,7 @@ public class BookServiceCustomer extends BookService{
             waitList.putIfAbsent(isbn, new ArrayList<>());
             waitList.get(isbn).add(currentUser);
 
+
             EmailService es = new EmailService(this.emailUser, this.emailPass);
             CustomerObserver observer = new CustomerObserver(currentUser, es, this);
             BookInventory.getInstance().addObserver(observer);
@@ -94,10 +95,6 @@ public class BookServiceCustomer extends BookService{
         System.out.println("Fine per day if overdue: ₪" + item.getFinePerDay());
         return true;
     }
-
-
-
-
 
 
 

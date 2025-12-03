@@ -1,9 +1,7 @@
 package Presentation;
 
 import Domain.User;
-import Service.BookServiceCustomer;
-import Service.Doenev;
-import Service.InputValidator;
+import Service.*;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,8 +18,11 @@ public class CustomerMenuUI {
     public void show(User loggedInUser) {
         bookService.setCurrentUser(loggedInUser);
         bookService.setEmailConfig(di.getUsername() , di.getPassword());
+
+        System.out.println("\n====== Welcome " + loggedInUser.getUsername() + " ======\n");
+
         while (true) {
-            System.out.println("\n====== Customer Menu ======");
+            System.out.println("====== Customer Menu ======");
             System.out.println("1. Browse Available Books");
             System.out.println("2. Browse Available CDs");
             System.out.println("3. Search Book");
@@ -63,11 +64,11 @@ public class CustomerMenuUI {
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
             writer.print(reportContent);
-            System.out.println("\n✅ Report successfully saved to: " + filename);
+            System.out.println("\n Report successfully saved to: " + filename);
             System.out.println("\nReport Preview:");
             System.out.println(reportContent);
         } catch (IOException e) {
-            System.out.println("❌ Error saving report: " + e.getMessage());
+            System.out.println("Error saving report: " + e.getMessage());
         }
     }
 

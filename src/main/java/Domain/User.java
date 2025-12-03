@@ -2,6 +2,7 @@ package Domain;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class User {
 
@@ -10,6 +11,9 @@ public class User {
     private String role;
     private String email;
     private Date lastLoginDate;
+
+    private final AtomicBoolean hasNewNotification = new AtomicBoolean(false);  // Thread-safe
+
 
     public User(String username , String password , String role , String email,Date lastLoginDate)
     {
@@ -40,13 +44,6 @@ public class User {
         return username;
     }
 
-    @Override
-    public String toString()
-    {
-        return (username + " | " + password + " | " + role + " | " + email+"| Last Login: " + getFormattedLastLoginDate());
-    }
-
-
     public String getEmail() {
         return email;
     }
@@ -62,6 +59,7 @@ public class User {
     public void setLastLoginDate(Date lastLoginDate) {
         this.lastLoginDate = lastLoginDate;
     }
+
     public String getFormattedLastLoginDate() {
         if (lastLoginDate != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");  // Format for just the date
@@ -70,4 +68,19 @@ public class User {
             return "Never logged in";
         }
     }
+
+    public boolean hasNewNotification() {
+        return hasNewNotification.get();
+    }
+
+    public void setHasNewNotification(boolean value) {
+        hasNewNotification.set(value);
+    }
+
+    @Override
+    public String toString()
+    {
+        return (username + " | " + password + " | " + role + " | " + email+"| Last Login: " + getFormattedLastLoginDate());
+    }
+
 }
