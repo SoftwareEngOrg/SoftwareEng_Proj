@@ -2,7 +2,7 @@ package Domain;
 
 public abstract class MediaItem {
     private String title;
-    private String author; // or artist for CDs
+    private String author;
     private boolean available;
 
 
@@ -11,10 +11,10 @@ public abstract class MediaItem {
         this.author = author;
         this.available = true;
     }
-    // Abstract method - each media type has different borrowing period
+
     public abstract int getBorrowingPeriodDays();
 
-    // Abstract method - each media type has different fine strategy
+
     public abstract int getFinePerDay();
 
 

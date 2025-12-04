@@ -44,7 +44,7 @@ public class Loan {
 
 
 
-    // Getters
+
     public String getLoanId() { return loanId; }
     public User getUser() { return user; }
     public MediaItem getMediaItem() { return mediaItem; }

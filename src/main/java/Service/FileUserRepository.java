@@ -12,7 +12,6 @@ public class FileUserRepository {
 
     public static String repoPath = "users.txt";
 
-
     public User findUser(String username, String password)
     {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -40,7 +39,6 @@ public class FileUserRepository {
         return null;
     }
 
-
     public boolean addUser(String username, String password, String email,Date current) {
 
         if (isUsernameExists(username)) {
@@ -63,8 +61,6 @@ public class FileUserRepository {
             return false;
         }
     }
-
-
 
     public boolean isUsernameExists(String username) {
         try (BufferedReader br = new BufferedReader(new FileReader(repoPath))) {
@@ -106,6 +102,7 @@ public class FileUserRepository {
             e.printStackTrace();
         }
     }
+
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -113,7 +110,7 @@ public class FileUserRepository {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(";");
-                if (parts.length == 5) { // Ensure there are enough parts (username, password, role, email, lastLogin)
+                if (parts.length == 5) {
                     Date lastLoginDate = dateFormat.parse(parts[4]);
                     User user = new User(parts[0], parts[1], parts[2], parts[3], lastLoginDate);
                     users.add(user);
@@ -124,6 +121,7 @@ public class FileUserRepository {
         }
         return users;
     }
+
     public boolean unregisterUserByUsername(String username) {
         List<User> users = getAllUsers();
         boolean userFound = false;
@@ -137,7 +135,7 @@ public class FileUserRepository {
                         .append(new SimpleDateFormat("yyyy-MM-dd").format(user.getLastLoginDate()))
                         .append("\n");
             } else {
-                userFound = true; // Mark if the user was found and removed
+                userFound = true;
             }
         }
 

@@ -29,12 +29,16 @@ public class AddBookUI {
 
         System.out.println("~~~~~~~~~~");
 
+        System.out.print("Number of Copies: ");
+        int numberOfCopies = Integer.parseInt(cin.nextLine());
+
         Book b = new Book(title, author, isbn);
-        String result = bookService.addBook(b) ? "Book added!" : "A book or CD with this ISBN already exists!";
+        String result = bookService.addBook(b, numberOfCopies)
+                ? "Book added with " + numberOfCopies + " copies!"
+                : "A book or CD with this ISBN already exists!";
         System.out.println(result);
 
         System.out.println("========================");
-
     }
 
 }

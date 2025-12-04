@@ -7,10 +7,9 @@ public class Book extends MediaItem {
     private String isbn;
 
     public Book(String title, String author, String isbn) {
-        super(title, author); // Call the constructor of MediaItem
+        super(title, author);
         this.isbn = isbn;
     }
-
 
     public String getIsbn() {
         return isbn;
@@ -24,12 +23,6 @@ public class Book extends MediaItem {
     public int getFinePerDay() {
         return 10;
     }
-
-  /*  @Override
-    public String toString()
-    {
-        return ("Title:" + this.getTitle() + " | " + "Author:" + getAuthor() + " | " + "Isbn:" + isbn + " | " + isAvailable());
-    }*/
 
 
     @Override

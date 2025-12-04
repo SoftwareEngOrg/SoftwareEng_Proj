@@ -1,11 +1,15 @@
 package Presentation;
 
+import Domain.Book;
+import Domain.CD;
+import Domain.MediaCopy;
 import Domain.User;
 import Service.*;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Scanner;
 
 
@@ -73,13 +77,28 @@ public class CustomerMenuUI {
     }
 
     private void browseCDs() {
-        var CDs = bookService.getAllAvailableCDs();
-        if (CDs.isEmpty()) {
+        var cds = bookService.getAllAvailableCDs();
+        if (cds.isEmpty()) {
             System.out.println("No CDs available right now.");
             return;
         }
+
         System.out.println("\n--- Available CDs ---");
-        CDs.forEach(b -> System.out.println(b + " [Available]"));
+
+        for (CD cd : cds) {
+            List<MediaCopy> copies = bookService.getCopiesByISBN(cd.getIsbn());
+            int availableCount = (int) copies.stream().filter(MediaCopy::isAvailable).count();
+
+            System.out.println(availableCount);
+            if (availableCount == 0) {
+                cd.setAvailable(false);
+            }
+
+            System.out.println(cd.getTitle() + " | Artist: " + cd.getAuthor()
+                    + " | Isbn: " + cd.getIsbn()
+                    + " | Available Copies: " + availableCount);
+        }
+
         System.out.println("-----------------------");
     }
 
@@ -89,8 +108,23 @@ public class CustomerMenuUI {
             System.out.println("No books available right now.");
             return;
         }
+
         System.out.println("\n--- Available Books ---");
-        books.forEach(b -> System.out.println(b + " [Available]"));
+
+        for (Book book : books) {
+            List<MediaCopy> copies = bookService.getCopiesByISBN(book.getIsbn());
+            int availableCount = (int) copies.stream().filter(MediaCopy::isAvailable).count();
+            System.out.println(availableCount);
+
+            if (availableCount == 0) {
+                book.setAvailable(false);
+            }
+
+            System.out.println(book.getTitle() + " | Author: " + book.getAuthor()
+                    + " | Isbn: " + book.getIsbn()
+                    + " | Available Copies: " + availableCount);
+        }
+
         System.out.println("-----------------------");
     }
 

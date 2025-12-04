@@ -19,13 +19,16 @@ public class FileCDRepository {
         return instance;
     }
 
-    public void saveCD(CD cd) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write(cd.getTitle() + "|" + cd.getAuthor() + "|" + cd.getIsbn() + "|" + cd.isAvailable());
-            writer.newLine();
-        } catch (IOException e) {
-            System.out.println("Error saving CD: " + e.getMessage());
+    public void saveCD(CD cd, int numberOfCopies) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_PATH, true))) {
+
+            pw.println(cd.getTitle() + ";" + cd.getAuthor() + ";" + cd.getIsbn() + ";" + true);
+
+        } catch (Exception e) {
+            System.out.println("Error writing to books file: " + e.getMessage());
         }
+
+        FileMediaCopyRepository.getInstance().addCopiesByBookIsbn( cd.getIsbn(), numberOfCopies, true);
     }
 
     public List<CD> findAllCDs() {
@@ -37,7 +40,7 @@ public class FileCDRepository {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.trim().isEmpty()) continue;
-                String[] parts = line.split("\\|");
+                String[] parts = line.split(";");
                 if (parts.length >= 4) {
                     CD cd = new CD(parts[0], parts[1], parts[2]);
                     cd.setAvailable(Boolean.parseBoolean(parts[3]));
@@ -53,7 +56,7 @@ public class FileCDRepository {
     public void updateAll(List<CD> cds) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (CD cd : cds) {
-                writer.write(cd.getTitle() + "|" + cd.getAuthor() + "|" + cd.getIsbn() + "|" + cd.isAvailable());
+                writer.write(cd.getTitle() + ";" + cd.getAuthor() + ";" + cd.getIsbn() + ";" + cd.isAvailable());
                 writer.newLine();
             }
         } catch (IOException e) {
@@ -67,4 +70,26 @@ public class FileCDRepository {
                 .findFirst()
                 .orElse(null);
     }
+
+    public void updateCDAvailability(String isbn) {
+        CD cd = findByIsbn(isbn);
+        if (cd != null) {
+
+            int availableCopies = FileMediaCopyRepository.getInstance()
+                    .getAvailableCopiesCount(isbn);
+
+            boolean wasAvailable = cd.isAvailable();
+            boolean nowAvailable = (availableCopies > 0);
+
+            cd.setAvailable(nowAvailable);
+
+
+            updateAll(findAllCDs());
+
+            if (!wasAvailable && nowAvailable) {
+                System.out.println("CD is now available - notifying waitlist...");
+            }
+        }
+    }
+
 }

@@ -62,8 +62,8 @@ public class User {
 
     public String getFormattedLastLoginDate() {
         if (lastLoginDate != null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");  // Format for just the date
-            return sdf.format(lastLoginDate);  // Return formatted date as string
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            return sdf.format(lastLoginDate);
         } else {
             return "Never logged in";
         }

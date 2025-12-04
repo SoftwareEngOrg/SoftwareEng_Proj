@@ -1,5 +1,6 @@
 package Service;
 import Domain.Book ;
+import Domain.MediaCopy;
 import Domain.MediaItem;
 
 import java.io.*;
@@ -13,7 +14,7 @@ public class FileBookRepository {
 
 
     private  FileBookRepository() {
-        loadBooksFromFile(); // Load once when object is created
+        loadBooksFromFile();
     }
 
     public static synchronized FileBookRepository getInstance() {
@@ -23,17 +24,17 @@ public class FileBookRepository {
         return instance;
     }
 
-
-    public void saveBook(Book b) {
+    public void saveBook(Book book, int numberOfCopies) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath, true))) {
-            pw.println(b.getTitle() + ";" + b.getAuthor() + ";" + b.getIsbn() + ";" + b.isAvailable());
-            cachedBooks.add(b);
+
+            pw.println(book.getTitle() + ";" + book.getAuthor() + ";" + book.getIsbn() + ";" + true);
+            cachedBooks.add(book);
         } catch (Exception e) {
-            System.out.println("Error writing to books file.");
+            System.out.println("Error writing to books file: " + e.getMessage());
         }
+
+        FileMediaCopyRepository.getInstance().addCopiesByBookIsbn(book.getIsbn(), numberOfCopies, true);
     }
-
-
 
     private void loadBooksFromFile() {
         cachedBooks.clear();
@@ -52,11 +53,9 @@ public class FileBookRepository {
         }
     }
 
-
     public List<Book> findAllBooks() {
         return new ArrayList<>(cachedBooks);
     }
-
 
     public void updateBooks(MediaItem item) {
         for (Book b : cachedBooks) {
@@ -68,9 +67,6 @@ public class FileBookRepository {
         }
         saveAllBooksToFile();
     }
-
-
-
 
     private void saveAllBooksToFile() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath))) {
@@ -85,6 +81,7 @@ public class FileBookRepository {
     public void reloadBooks() {
         loadBooksFromFile();
     }
+
     public Book findByIsbn(String isbn) {
         return findAllBooks().stream()
                 .filter(book -> book.getIsbn().equalsIgnoreCase(isbn.trim()))
@@ -92,5 +89,24 @@ public class FileBookRepository {
                 .orElse(null);
     }
 
+    public void updateBookAvailability(String isbn) {
+        Book book = findByIsbn(isbn);
+        if (book != null) {
+
+            int availableCopies = FileMediaCopyRepository.getInstance()
+                    .getAvailableCopiesCount(isbn);
+
+            boolean wasAvailable = book.isAvailable();
+            boolean nowAvailable = (availableCopies > 0);
+
+            book.setAvailable(nowAvailable);
+            saveAllBooksToFile();
+
+
+            if (!wasAvailable && nowAvailable) {
+                System.out.println("Book is now available - notifying waitlist...");
+            }
+        }
+    }
 
 }

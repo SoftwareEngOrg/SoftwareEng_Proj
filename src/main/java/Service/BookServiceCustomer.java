@@ -2,6 +2,10 @@ package Service;
 
 import Domain.*;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,19 +19,13 @@ public class BookServiceCustomer extends BookService{
     private User currentUser;
     private Map<String, List<User>> waitList = new HashMap<>();
     private FileCDRepository fileCD = FileCDRepository.getInstance();
-
-
     private String emailUser;
     private String emailPass;
-
     private static BookServiceCustomer instance;
-
-
 
     public void setCurrentUser(User user) {
         this.currentUser = user;
     }
-
 
     public BookServiceCustomer(String emailUser, String emailPass) {
         this.emailUser = emailUser;
@@ -41,8 +39,6 @@ public class BookServiceCustomer extends BookService{
         this.emailPass = emailPass;
     }
 
-
-
     public boolean borrowMediaItem(String isbn) {
         if (currentUser == null) {
             System.out.println("Error: User not logged in.");
@@ -50,13 +46,19 @@ public class BookServiceCustomer extends BookService{
         }
 
         MediaItem item = findMediaByIsbn(isbn);
-
         if (item == null) {
             System.out.println("Item with ISBN '" + isbn + "' not found.");
             return false;
         }
 
-        if (!item.isAvailable()) {
+
+        List<MediaCopy> availableCopies = FileMediaCopyRepository.getInstance()
+                .getCopiesByIsbn(isbn).stream()
+                .filter(MediaCopy::isAvailable)
+                .toList();
+
+
+        if (availableCopies.isEmpty()) {
             System.out.println(item.getClass().getSimpleName() + " is currently borrowed.");
             System.out.println("We will notify you by email when it becomes available.");
 
@@ -65,8 +67,14 @@ public class BookServiceCustomer extends BookService{
                 return false;
             }
 
+
             waitList.putIfAbsent(isbn, new ArrayList<>());
-            waitList.get(isbn).add(currentUser);
+            if (!waitList.get(isbn).contains(currentUser)) {
+                waitList.get(isbn).add(currentUser);
+                System.out.println(" You have been added to the waitlist.");
+            } else {
+                System.out.println("You are already on the waitlist.");
+            }
 
 
             EmailService es = new EmailService(this.emailUser, this.emailPass);
@@ -75,6 +83,7 @@ public class BookServiceCustomer extends BookService{
 
             return false;
         }
+
 
         LocalDate today = LocalDate.now();
         List<Loan> activeLoans = loanRepository.getActiveLoansForUser(currentUser.getUsername());
@@ -87,17 +96,26 @@ public class BookServiceCustomer extends BookService{
             return false;
         }
 
+
+        MediaCopy copyToBorrow = availableCopies.get(0);
+        copyToBorrow.setAvailable(false);
+        FileMediaCopyRepository.getInstance().saveToFile();
+
+
+        FileBookRepository.getInstance().updateBookAvailability(isbn);
+
+
         Loan loan = loanRepository.borrowItem(currentUser, item);
+
         System.out.println(item.getClass().getSimpleName() + " borrowed successfully!");
         System.out.println("Loan ID: " + loan.getLoanId());
+        System.out.println("Copy ID: " + copyToBorrow.getCopyId());
         System.out.println("Due date: " + loan.getDueDate());
         System.out.println("Borrowing period: " + item.getBorrowingPeriodDays() + " days");
         System.out.println("Fine per day if overdue: ₪" + item.getFinePerDay());
+
         return true;
     }
-
-
-
 
     public boolean returnBook(String loanId) {
         LocalDate today = LocalDate.now();
@@ -118,15 +136,25 @@ public class BookServiceCustomer extends BookService{
         if (fine > 0) {
             System.out.println("You have an overdue fine: ₪" + fine);
             return false;
-        } else {
-            // No fine - process return immediately
-            loanRepository.returnItem(loanId, today);
-            System.out.println("Book returned on time. Thank you!");
-
-            // notify all observers
-            BookInventory.getInstance().notifyBookReturned(loan.getMediaItem().getIsbnOrId());
-            return true;
         }
+
+        MediaItem item = loan.getMediaItem();
+        String isbn = item.getIsbnOrId();
+
+        returnCopyByLoan(loan);
+
+        loanRepository.returnItem(loanId, today);
+
+        if (item instanceof Book) {
+            FileBookRepository.getInstance().updateBookAvailability(isbn);
+            BookInventory.getInstance().notifyBookReturned(isbn);
+        } else if (item instanceof CD) {
+            FileCDRepository.getInstance().updateCDAvailability(isbn);
+            BookInventory.getInstance().notifyBookReturned(isbn);
+        }
+
+        System.out.println("Item returned on time. Thank you!");
+        return true;
     }
 
     public boolean completeReturn(String loanId) {
@@ -138,12 +166,41 @@ public class BookServiceCustomer extends BookService{
             return false;
         }
 
-        loanRepository.returnItem(loanId, today);
-        System.out.println("Fine paid. Book returned successfully!");
+        String isbn = loan.getMediaItem().getIsbnOrId();
 
-        // notify all observers
-        BookInventory.getInstance().notifyBookReturned(loan.getMediaItem().getIsbnOrId());
+        returnCopyByLoan(loan);
+
+        loanRepository.returnItem(loanId, today);
+        System.out.println("Fine paid. Item returned successfully!");
+
+        MediaItem item = loan.getMediaItem();
+
+        if (item instanceof Book) {
+            FileBookRepository.getInstance().updateBookAvailability(isbn);
+            BookInventory.getInstance().notifyBookReturned(isbn);
+
+        } else if (item instanceof CD) {
+            FileCDRepository.getInstance().updateCDAvailability(isbn);
+            System.out.println("CD availability updated.");
+        }
+
         return true;
+    }
+
+    private void returnCopyByLoan(Loan loan) {
+        String isbn = loan.getMediaItem().getIsbnOrId();
+        List<MediaCopy> copies = FileMediaCopyRepository.getInstance().getCopiesByIsbn(isbn);
+
+        for (MediaCopy copy : copies) {
+            if (!copy.isAvailable()) {
+                copy.setAvailable(true);
+                FileMediaCopyRepository.getInstance().saveToFile();
+                System.out.println("Copy " + copy.getCopyId() + " returned successfully.");
+                return;
+            }
+        }
+
+        System.out.println("Error: No borrowed copy found to return.");
     }
 
     public void viewMyLoans() {
@@ -160,7 +217,7 @@ public class BookServiceCustomer extends BookService{
             return;
         }
 
-        // Separate loans into Books and CDs
+
         List<Loan> bookLoans = new ArrayList<>();
         List<Loan> cdLoans = new ArrayList<>();
 
@@ -175,9 +232,9 @@ public class BookServiceCustomer extends BookService{
         System.out.println("\n=== Your Active Loans ===");
         int totalFine = 0;
 
-        // Display Book Loans
+
         if (!bookLoans.isEmpty()) {
-            System.out.println("\n📚 BOOK LOANS:");
+            System.out.println("\n BOOK LOANS:");
             System.out.println("--------------------------------------");
             for (Loan loan : bookLoans) {
                 int fine = loan.calculateFine(today);
@@ -193,9 +250,9 @@ public class BookServiceCustomer extends BookService{
             System.out.println("--------------------------------------");
         }
 
-        // Display CD Loans
+
         if (!cdLoans.isEmpty()) {
-            System.out.println("\n💿 CD LOANS:");
+            System.out.println("\n CD LOANS:");
             System.out.println("--------------------------------------");
             for (Loan loan : cdLoans) {
                 int fine = loan.calculateFine(today);
@@ -212,23 +269,42 @@ public class BookServiceCustomer extends BookService{
         }
 
         if (totalFine > 0) {
-            System.out.println("\n💰 Total fine owed: ₪" + totalFine);
+            System.out.println("\n Total fine owed: ₪" + totalFine);
         }
     }
 
-
     public List<Book> getAllAvailableBooks() {
-        return fileBook.findAllBooks().stream()
-                .filter(MediaItem::isAvailable)
-                .toList();
+        List<Book> allBooks = fileBook.findAllBooks();
+        List<Book> availableBooks = new ArrayList<>();
+
+        for (Book book : allBooks) {
+            int availableCopies = FileMediaCopyRepository.getInstance()
+                    .getAvailableCopiesCount(book.getIsbn());
+
+            if (availableCopies > 0) {
+                book.setAvailable(true);
+                availableBooks.add(book);
+            }
+        }
+
+        return availableBooks;
     }
 
     public List<CD> getAllAvailableCDs() {
-        List<CD> all = new ArrayList<>();
-        all.addAll(fileCD.findAllCDs().stream()
-                .filter(MediaItem::isAvailable)
-                .toList());
-        return all;
+        List<CD> allCDs = fileCD.findAllCDs();
+        List<CD> availableCDs = new ArrayList<>();
+
+        for (CD cd : allCDs) {
+            int availableCopies = FileMediaCopyRepository.getInstance()
+                    .getAvailableCopiesCount(cd.getIsbn());
+
+            if (availableCopies > 0) {
+                cd.setAvailable(true);
+                availableCDs.add(cd);
+            }
+        }
+
+        return availableCDs;
     }
 
     public MediaItem findMediaByIsbn(String isbn) {
@@ -264,7 +340,7 @@ public class BookServiceCustomer extends BookService{
             return report.toString();
         }
 
-        // Separate loans into Books and CDs
+
         List<Loan> bookLoans = new ArrayList<>();
         List<Loan> cdLoans = new ArrayList<>();
 
@@ -296,7 +372,7 @@ public class BookServiceCustomer extends BookService{
             report.append("-".repeat(50)).append("\n\n");
         }
 
-        // Display CD Loans
+
         if (!cdLoans.isEmpty()) {
             report.append("CD LOANS:\n");
             report.append("-".repeat(50)).append("\n");
@@ -321,6 +397,33 @@ public class BookServiceCustomer extends BookService{
         }
 
         return report.toString();
+    }
+
+    public List<MediaCopy> getCopiesByISBN(String isbn) {
+        List<MediaCopy> copies = new ArrayList<>();
+
+        MediaItem item = findMediaByIsbn(isbn);
+        if (item == null) return copies;
+
+        try (BufferedReader br = new BufferedReader(new FileReader("media_copies.txt"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(";");
+                if (parts.length < 3) continue;
+
+                String copyId = parts[0];
+                String copyIsbn = parts[1];
+                boolean available = Boolean.parseBoolean(parts[2]);
+
+                if (copyIsbn.equals(isbn)) {
+                    copies.add(new MediaCopy(copyId, item, available));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return copies;
     }
 
 }

@@ -41,13 +41,13 @@ public class LoginUI {
                 {
                     userRepo.updateDate(foundUser);
                     CustomerMenuUI customerMenu = new CustomerMenuUI();
-                    customerMenu.show(foundUser);  // Pass the actual User object!
+                    customerMenu.show(foundUser);
                 }
                 else if(foundUser.getRole().equals("librarian"))
                 {
                     System.out.println("Welcome, Librarian " + foundUser.getUsername() + "!");
                     userRepo.updateDate(foundUser);
-                    new LibrarianMenuUI().show();  // This is the new menu
+                    new LibrarianMenuUI().show();
                 }
                 nonvalidUser = false;
             }

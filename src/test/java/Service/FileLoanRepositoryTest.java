@@ -43,7 +43,7 @@ class FileLoanRepositoryTest {
         book.setAvailable(true);
 
         // Save the book so it exists in the repo
-        FileBookRepository.getInstance().saveBook(book);
+        FileBookRepository.getInstance().saveBook(book , 1);
         repo = new FileLoanRepository();  // reload so book is cached
     }
 
@@ -112,7 +112,7 @@ class FileLoanRepositoryTest {
 
         User bob = new User("bob", "456", "customer");
         Book book2 = new Book("Python", "B", "888");
-        FileBookRepository.getInstance().saveBook(book2);
+        FileBookRepository.getInstance().saveBook(book2 , 1);
         repo = new FileLoanRepository();
         repo.borrowItem(bob, book2);
 

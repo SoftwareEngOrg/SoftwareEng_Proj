@@ -23,32 +23,20 @@ public class FileLoanRepository {
         loadLoans();
     }
 
-
     public Loan borrowItem(User user, MediaItem item) {
-        if (!item.isAvailable()) {
-            throw new IllegalStateException("Item is not available for borrowing.");
-        }
+
 
         String loanId = UUID.randomUUID().toString().substring(0, 8);
-        Loan loan = new Loan(loanId, user, item, LocalDate.now());
-        item.setAvailable(false);
+        LocalDate borrowDate = LocalDate.now();
+        LocalDate dueDate = borrowDate.plusDays(item.getBorrowingPeriodDays());
 
-        if (item instanceof Domain.Book) {
-            bookRepository.updateBooks(item);
-        } else if (item instanceof CD) {
-            List<CD> allCDs = cdRepository.findAllCDs();
-            for(CD cd:allCDs)
-            {
-                if(cd.getIsbn().equals(((CD) item).getIsbn()))
-                    cd.setAvailable(false);
-            }
-            cdRepository.updateAll(allCDs);
-        }
+        Loan loan = new Loan(loanId, user, item, borrowDate);
+
         loans.add(loan);
         saveToFile();
+
         return loan;
     }
-
 
     public boolean returnItem(String loanId, LocalDate returnDate) {
         for (Loan loan : loans) {
@@ -75,8 +63,6 @@ public class FileLoanRepository {
         return false;
     }
 
-
-    // === Queries ===
     public List<Loan> getActiveLoansForUser(String username)
     {
         return loans.stream()
@@ -105,8 +91,6 @@ public class FileLoanRepository {
                 .orElse(null);
     }
 
-    // === Persistence ===
-
     private void saveToFile() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_PATH))) {
             for (Loan loan : loans) {
@@ -114,7 +98,7 @@ public class FileLoanRepository {
                 String line = String.format("%s;%s;%s;%s;%s",
                         loan.getLoanId(),
                         loan.getUser().getUsername(),
-                        loan.getMediaItem().getIsbnOrId(), // We'll improve this later for non-books
+                        loan.getMediaItem().getIsbnOrId(),
                         loan.getBorrowDate(),
                         returnDateStr
                 );
@@ -124,8 +108,6 @@ public class FileLoanRepository {
             System.out.println("Error saving loans: " + e.getMessage());
         }
     }
-
-
 
     private void loadLoans()
     {
@@ -141,11 +123,11 @@ public class FileLoanRepository {
 
                 String loanId = p[0];
                 String username = p[1];
-                String itemId = p[2]; // ISBN for Book, later ID for CD
+                String itemId = p[2];
                 LocalDate borrowDate = LocalDate.parse(p[3]);
                 LocalDate returnDate = p[4].equals("NULL") ? null : LocalDate.parse(p[4]);
 
-                // Find user (simple lookup - improve later if needed)
+
                 User user = findUserByUsername(username);
                 MediaItem item = findMediaItemById(itemId);
 
@@ -154,7 +136,7 @@ public class FileLoanRepository {
                     if (returnDate != null) {
                         loan.returnItem(returnDate);
                     } else {
-                        item.setAvailable(false); // Still borrowed
+                        item.setAvailable(false);
                     }
                     loans.add(loan);
                 }
@@ -164,15 +146,11 @@ public class FileLoanRepository {
         }
     }
 
-
-
-    // Helper: find user
     private User findUserByUsername(String username) {
-        // Temporary: just create dummy user - replace with real repo later
+
         return new User(username, "temp", username.equals("admin") ? "admin" : "customer");
     }
 
-    // find MediaItem by ISBN
     private MediaItem findMediaItemById(String id) {
         MediaItem book = bookRepository.findAllBooks().stream()
                 .filter(b -> b.getIsbn().equals(id))
@@ -183,7 +161,7 @@ public class FileLoanRepository {
             return book;
         }
 
-        // Check CDs
+
         return cdRepository.findAllCDs().stream()
                 .filter(cd -> cd.getIsbn().equals(id))
                 .findFirst()
