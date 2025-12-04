@@ -26,6 +26,6 @@ public class CD extends MediaItem {
 
     @Override
     public String toString() {
-        return "CD: " + getTitle() + " by " + getAuthor() + " | ISBN: " + isbn + " | " + (isAvailable() ? "Available" : "Borrowed");
+        return "CD: " + this.getTitle() + " by " + this.getAuthor() + " | ISBN: " + isbn + " | " + (isAvailable() ? "Available" : "Borrowed");
     }
 }

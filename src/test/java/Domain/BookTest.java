@@ -1,4 +1,3 @@
-// src/test/java/Domain/BookTest.java
 package Domain;
 
 import org.junit.jupiter.api.*;
@@ -42,15 +41,15 @@ class BookTest {
     @Test
     @DisplayName("toString contains Title, Author, Isbn and availability")
     void toString_containsAllFields() {
-        Book book = new Book("Harry Potter", "J.K. Rowling", "777");
+        Book book = new Book("test test", "test test", "777");
         book.setAvailable(false);
 
         String str = book.toString();
 
-        assertTrue(str.contains("Title:Harry Potter"));
-        assertTrue(str.contains("Author:J.K. Rowling"));
+        assertTrue(str.contains("Title:test test"));
+        assertTrue(str.contains("Author:test test"));
         assertTrue(str.contains("Isbn:777"));
-        assertTrue(str.contains("false"));
+        assertTrue(str.contains("Borrowed"));
     }
 
     @Test

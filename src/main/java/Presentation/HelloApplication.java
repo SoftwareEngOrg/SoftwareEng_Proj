@@ -1,5 +1,6 @@
 package Presentation;
 
+import Domain.MediaItem;
 import Service.BookServiceCustomer;
 import Service.InputValidator;
 import Service.Doenev;
@@ -9,6 +10,7 @@ public class HelloApplication {
 
         Doenev di = new Doenev();
         BookServiceCustomer service = new BookServiceCustomer(di.getUsername(), di.getPassword());
+
 
         while (true)
         {

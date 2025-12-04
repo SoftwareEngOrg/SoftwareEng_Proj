@@ -48,6 +48,6 @@ public abstract class MediaItem {
     public String toString() {
         return String.format("%s: %s by %s [%s]",
                 getClass().getSimpleName(), title, author,
-                available ? "Available" : "Borrowed");
+                isAvailable() ? "Available" : "Borrowed");
     }
 }

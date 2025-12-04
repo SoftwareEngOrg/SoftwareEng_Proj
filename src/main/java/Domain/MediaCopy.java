@@ -12,6 +12,7 @@ public class MediaCopy {
     {
         this.copyId = copyId;
         this.mediaItem = mediaItem;
+        this.available = true;
 
     }
 
@@ -21,7 +22,6 @@ public class MediaCopy {
         this.copyId = copyId;
         this.mediaItem = mediaItem;
         this.available = available;
-
 
     }
 
