@@ -186,4 +186,13 @@ public class FileUserRepository {
         }
     }
 
+    public User findUserByUsername(String username) {
+        List<User> allUsers = getAllUsers();
+
+        return allUsers.stream()
+                .filter(user -> user.getUsername().equals(username))
+                .findFirst()
+                .orElse(null);
+    }
+
 }

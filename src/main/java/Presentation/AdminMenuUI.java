@@ -1,11 +1,8 @@
 package Presentation;
 
 import Domain.User;
-import Service.BookService;
-import Service.AdminService;
+import Service.*;
 import Domain.Book;
-import Service.BookServiceAdmin;
-import Service.InputValidator;
 
 import java.util.List;
 import java.util.Scanner;
@@ -30,7 +27,7 @@ public class AdminMenuUI {
             System.out.println("2. Add CD");
             System.out.println("3. Search Book");
             System.out.println("4. inactive users");
-            System.out.println("5. Reminding ");
+            System.out.println("5. Reminder");
             System.out.println("6. Logout");
             System.out.println("=========================");
 
@@ -57,7 +54,7 @@ public class AdminMenuUI {
 
             else if (choice == 5)
             {
-                viewInactiveUsersUI();
+                Reminder();
 
             }
 
@@ -67,6 +64,29 @@ public class AdminMenuUI {
                 System.out.println("Logged out!");
                 break;
             }
+        }
+
+    }
+
+    private void Reminder() {
+        System.out.println("\n====== Reminder: Users with Overdue Loans ======");
+
+        ReminderService reminderService = new ReminderService();
+        int overdueCount = reminderService.displayOverdueUsers();
+
+        if (overdueCount == 0) {
+            System.out.println("=".repeat(50));
+            return;
+        }
+        System.out.println("=".repeat(50));
+
+        System.out.print("\nDo you want to send email reminders to all users? (yes/no): ");
+        String choice = cin.nextLine().trim().toLowerCase();
+
+        if (choice.equals("yes") || choice.equals("y")) {
+            reminderService.sendReminders();
+        } else {
+            System.out.println("Reminder cancelled.");
         }
 
     }
