@@ -9,6 +9,7 @@ public class FileMediaCopyRepository {
 
     private static FileMediaCopyRepository instance;
     private static final String FILE_PATH = "media_copies.txt";
+    public static String repoPath = FILE_PATH;
     private List<MediaCopy> copies = new ArrayList<>();
 
 
@@ -23,6 +24,11 @@ public class FileMediaCopyRepository {
         }
 
         return instance;
+    }
+
+
+    private String getFilePath() {
+        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
     }
 
     private String generateCopyId(String isbn, int index) {
@@ -83,7 +89,7 @@ public class FileMediaCopyRepository {
     private void loadFromFile() {
         copies.clear();
 
-        File file = new File(FILE_PATH);
+        File file = new File(getFilePath());
         if (!file.exists()) return;
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -112,7 +118,7 @@ public class FileMediaCopyRepository {
     }
 
     public void saveToFile() {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_PATH))) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(getFilePath()))) {
             for (MediaCopy c : copies) {
                 pw.println(c.getCopyId() + ";" + c.getMediaItem().getIsbnOrId() + ";" + c.isAvailable());
             }

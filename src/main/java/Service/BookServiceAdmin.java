@@ -19,15 +19,12 @@ public class BookServiceAdmin extends BookService {
         boolean exists = existingBooks.stream()
                 .anyMatch(b -> b.getIsbn().equalsIgnoreCase(book.getIsbn()));
 
-        if (fileCD.findByIsbn(book.getIsbn()) != null) {
-            return false;
-        }
-        if (exists) {
-            return false;
-        }
+        if (fileCD.findByIsbn(book.getIsbn()) != null) return false;
+        if (exists) return false;
 
 
-        FileBookRepository.getInstance().saveBook(book, numberOfCopies);
+        FileBookRepository.getInstance();
+        FileBookRepository.saveBook(book, numberOfCopies);
 
         return true;
     }
@@ -58,22 +55,20 @@ public class BookServiceAdmin extends BookService {
             System.out.println("something went wrong");
     }
 
-    public boolean addCD(CD cd , int numberOfCopies) {
+    public boolean addCD(CD cd, int numberOfCopies) {
         if (numberOfCopies <= 0) return false;
 
-        List<CD> existingBooks = this.fileCD.findAllCDs();
-
-        boolean exists = existingBooks.stream()
+        List<CD> existingCDs = this.fileCD.findAllCDs();
+        boolean exists = existingCDs.stream()
                 .anyMatch(b -> b.getIsbn().equalsIgnoreCase(cd.getIsbn()));
 
-        if (fileBook.findByIsbn(cd.getIsbn()) != null) {
-            return false;
-        }
-        if (exists) {
-            return false;
-        }
+        if (fileBook.findByIsbn(cd.getIsbn()) != null) return false;
+        if (exists) return false;
 
-        FileCDRepository.getInstance().saveCD(cd , numberOfCopies);
+
+        FileCDRepository.getInstance();
+        FileCDRepository.saveCD(cd, numberOfCopies);
+
         return true;
     }
 

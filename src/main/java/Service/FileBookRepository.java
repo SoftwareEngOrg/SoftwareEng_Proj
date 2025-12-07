@@ -8,13 +8,18 @@ import java.util.*;
 
 public class FileBookRepository {
 
-    private static FileBookRepository instance;
-    public static String repoPath = "books.txt";
-    private List<Book> cachedBooks = new ArrayList<>();
+    static FileBookRepository instance;
+    private static final String FILE_PATH = "books.txt";
+    public static  String repoPath = FILE_PATH;
+    private static List<Book> cachedBooks = new ArrayList<>();
 
 
     private  FileBookRepository() {
         loadBooksFromFile();
+    }
+
+    private String getFilePath() {
+        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
     }
 
     public static synchronized FileBookRepository getInstance() {
@@ -24,7 +29,7 @@ public class FileBookRepository {
         return instance;
     }
 
-    public void saveBook(Book book, int numberOfCopies) {
+    public static void saveBook(Book book, int numberOfCopies) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath, true))) {
 
             pw.println(book.getTitle() + ";" + book.getAuthor() + ";" + book.getIsbn() + ";" + true);
@@ -38,7 +43,7 @@ public class FileBookRepository {
 
     private void loadBooksFromFile() {
         cachedBooks.clear();
-        try (BufferedReader br = new BufferedReader(new FileReader(repoPath))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(getFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] p = line.split(";");

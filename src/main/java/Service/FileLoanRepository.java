@@ -13,9 +13,14 @@ import java.util.UUID;
 
 public class FileLoanRepository {
     public static  String FILE_PATH = "loans.txt";
+    public static String repoPath = FILE_PATH;
     private final List<Loan> loans = new ArrayList<>();
     private final FileBookRepository bookRepository; // Reuse cached books
     private final FileCDRepository cdRepository;
+
+    private String getFilePath() {
+        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
+    }
 
     public FileLoanRepository() {
         this.bookRepository = FileBookRepository.getInstance();

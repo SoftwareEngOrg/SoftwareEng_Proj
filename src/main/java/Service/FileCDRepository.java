@@ -10,6 +10,7 @@ import java.util.List;
 
 public class FileCDRepository {
     private static final String FILE_PATH = "CD.txt";
+    public static String repoPath = FILE_PATH;
     private static FileCDRepository instance;
 
     public static FileCDRepository getInstance() {
@@ -19,21 +20,27 @@ public class FileCDRepository {
         return instance;
     }
 
-    public void saveCD(CD cd, int numberOfCopies) {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_PATH, true))) {
+
+    private String getFilePath() {
+        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
+    }
+
+    public static void saveCD(CD cd, int numberOfCopies) {
+        FileCDRepository repo = getInstance();
+        try (PrintWriter pw = new PrintWriter(new FileWriter(repo.getFilePath(), true))) {
 
             pw.println(cd.getTitle() + ";" + cd.getAuthor() + ";" + cd.getIsbn() + ";" + true);
 
         } catch (Exception e) {
-            System.out.println("Error writing to books file: " + e.getMessage());
+            System.out.println("Error writing to CDs file: " + e.getMessage());
         }
 
-        FileMediaCopyRepository.getInstance().addCopiesByBookIsbn( cd.getIsbn(), numberOfCopies, true);
+        FileMediaCopyRepository.getInstance().addCopiesByBookIsbn(cd.getIsbn(), numberOfCopies, true);
     }
 
     public List<CD> findAllCDs() {
         List<CD> cds = new ArrayList<>();
-        File file = new File(FILE_PATH);
+        File file = new File(getFilePath());
         if (!file.exists()) return cds;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -54,7 +61,7 @@ public class FileCDRepository {
     }
 
     public void updateAll(List<CD> cds) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(getFilePath()))) {
             for (CD cd : cds) {
                 writer.write(cd.getTitle() + ";" + cd.getAuthor() + ";" + cd.getIsbn() + ";" + cd.isAvailable());
                 writer.newLine();
@@ -83,7 +90,6 @@ public class FileCDRepository {
 
             cd.setAvailable(nowAvailable);
 
-
             updateAll(findAllCDs());
 
             if (!wasAvailable && nowAvailable) {
@@ -91,5 +97,4 @@ public class FileCDRepository {
             }
         }
     }
-
 }

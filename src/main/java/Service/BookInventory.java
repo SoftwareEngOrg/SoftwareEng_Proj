@@ -13,19 +13,18 @@ public class BookInventory
         return instance;
     }
 
-    private List<BookObserver> observers = new ArrayList<>();
+    List<BookObserver> observers = new ArrayList<>();
 
     public void addObserver(BookObserver observer) {
         observers.add(observer);
     }
 
-
-    public void notifyBookReturned(String isbn)
-    {
+    public void notifyBookReturned(String isbn) {
         System.out.println("Book returned: " + isbn);
         for (BookObserver observer : observers) {
             observer.onBookAvailable(isbn);
         }
         observers.clear();
     }
+
 }

@@ -26,8 +26,6 @@ public class CustomerObserver implements BookObserver {
             return;
         }
 
-
-
         MediaItem item = service.findMediaByIsbn(isbn);
 
         if (item == null) {

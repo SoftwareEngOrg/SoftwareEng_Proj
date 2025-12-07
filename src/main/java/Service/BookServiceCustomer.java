@@ -40,6 +40,12 @@ public class BookServiceCustomer extends BookService{
     }
 
     public boolean borrowMediaItem(String isbn) {
+
+        if (isbn == null || isbn.trim().isEmpty()) {
+            System.out.println("Error: ISBN is null or empty.");
+            return false;
+        }
+
         if (currentUser == null) {
             System.out.println("Error: User not logged in.");
             return false;
@@ -399,7 +405,7 @@ public class BookServiceCustomer extends BookService{
         return report.toString();
     }
 
-    public List<MediaCopy> getCopiesByISBN(String isbn) {
+   /* public List<MediaCopy> getCopiesByISBN(String isbn) {
         List<MediaCopy> copies = new ArrayList<>();
 
         MediaItem item = findMediaByIsbn(isbn);
@@ -424,6 +430,10 @@ public class BookServiceCustomer extends BookService{
         }
 
         return copies;
+    }*/
+
+    public List<MediaCopy> getCopiesByISBN(String isbn) {
+        return FileMediaCopyRepository.getInstance().getCopiesByIsbn(isbn);
     }
 
 }
