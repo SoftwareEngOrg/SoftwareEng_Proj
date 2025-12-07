@@ -1,5 +1,6 @@
 package Service;
 
+import Domain.CD;
 import Domain.Loan;
 import Domain.MediaItem;
 import Domain.User;
@@ -12,26 +13,33 @@ import java.util.UUID;
 
 public class FileLoanRepository {
     public static  String FILE_PATH = "loans.txt";
+    public static String repoPath = FILE_PATH;
     private final List<Loan> loans = new ArrayList<>();
     private final FileBookRepository bookRepository; // Reuse cached books
+    private final FileCDRepository cdRepository;
+
+    private String getFilePath() {
+        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
+    }
 
     public FileLoanRepository() {
-        this.bookRepository = new FileBookRepository();
+        this.bookRepository = FileBookRepository.getInstance();
+        this.cdRepository = FileCDRepository.getInstance();
         loadLoans();
     }
 
-
     public Loan borrowItem(User user, MediaItem item) {
-        if (!item.isAvailable()) {
-            throw new IllegalStateException("Item is not available for borrowing.");
-        }
 
-        String loanId = UUID.randomUUID().toString().substring(0, 8); // Simple unique ID
-        Loan loan = new Loan(loanId, user, item, LocalDate.now());
-        item.setAvailable(false); // Mark as borrowed
-        bookRepository.updateBooks(item);                // ← PERSIST TO FILE!
+
+        String loanId = UUID.randomUUID().toString().substring(0, 8);
+        LocalDate borrowDate = LocalDate.now();
+        LocalDate dueDate = borrowDate.plusDays(item.getBorrowingPeriodDays());
+
+        Loan loan = new Loan(loanId, user, item, borrowDate);
+
         loans.add(loan);
         saveToFile();
+
         return loan;
     }
 
@@ -40,11 +48,19 @@ public class FileLoanRepository {
             if (loan.getLoanId().equals(loanId) && loan.getReturnDate() == null) {
                 loan.returnItem(returnDate != null ? returnDate : LocalDate.now());
 
-                // Mark book as available and update the file
                 MediaItem item = loan.getMediaItem();
                 item.setAvailable(true);
-                bookRepository.updateBooks(item);  // ← PERSIST TO FILE!
-
+                if (item instanceof Domain.Book) {
+                    bookRepository.updateBooks(item);
+                } else if (item instanceof CD) {
+                    List<CD> allCDs = cdRepository.findAllCDs();
+                    for(CD cd:allCDs)
+                    {
+                        if(cd.getIsbn().equals(((CD) item).getIsbn()))
+                            cd.setAvailable(true);
+                    }
+                    cdRepository.updateAll(allCDs);
+                }
                 saveToFile();
                 return true;
             }
@@ -52,9 +68,8 @@ public class FileLoanRepository {
         return false;
     }
 
-
-    // === Queries ===
-    public List<Loan> getActiveLoansForUser(String username) {
+    public List<Loan> getActiveLoansForUser(String username)
+    {
         return loans.stream()
                 .filter(loan -> loan.getUser().getUsername().equals(username))
                 .filter(loan -> loan.getReturnDate() == null)
@@ -81,8 +96,6 @@ public class FileLoanRepository {
                 .orElse(null);
     }
 
-    // === Persistence ===
-
     private void saveToFile() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_PATH))) {
             for (Loan loan : loans) {
@@ -90,7 +103,7 @@ public class FileLoanRepository {
                 String line = String.format("%s;%s;%s;%s;%s",
                         loan.getLoanId(),
                         loan.getUser().getUsername(),
-                        loan.getMediaItem().getIsbnOrId(), // We'll improve this later for non-books
+                        loan.getMediaItem().getIsbnOrId(),
                         loan.getBorrowDate(),
                         returnDateStr
                 );
@@ -101,7 +114,8 @@ public class FileLoanRepository {
         }
     }
 
-    private void loadLoans() {
+    private void loadLoans()
+    {
         loans.clear();
         File file = new File(FILE_PATH);
         if (!file.exists()) return;
@@ -114,11 +128,11 @@ public class FileLoanRepository {
 
                 String loanId = p[0];
                 String username = p[1];
-                String itemId = p[2]; // ISBN for Book, later ID for CD
+                String itemId = p[2];
                 LocalDate borrowDate = LocalDate.parse(p[3]);
                 LocalDate returnDate = p[4].equals("NULL") ? null : LocalDate.parse(p[4]);
 
-                // Find user (simple lookup - improve later if needed)
+
                 User user = findUserByUsername(username);
                 MediaItem item = findMediaItemById(itemId);
 
@@ -127,7 +141,7 @@ public class FileLoanRepository {
                     if (returnDate != null) {
                         loan.returnItem(returnDate);
                     } else {
-                        item.setAvailable(false); // Still borrowed
+                        item.setAvailable(false);
                     }
                     loans.add(loan);
                 }
@@ -137,16 +151,24 @@ public class FileLoanRepository {
         }
     }
 
-    // Helper: find user
     private User findUserByUsername(String username) {
-        // Temporary: just create dummy user - replace with real repo later
+
         return new User(username, "temp", username.equals("admin") ? "admin" : "customer");
     }
 
-    // find MediaItem by ISBN
     private MediaItem findMediaItemById(String id) {
-        return bookRepository.findAllBooks().stream()
+        MediaItem book = bookRepository.findAllBooks().stream()
                 .filter(b -> b.getIsbn().equals(id))
+                .findFirst()
+                .orElse(null);
+
+        if (book != null) {
+            return book;
+        }
+
+
+        return cdRepository.findAllCDs().stream()
+                .filter(cd -> cd.getIsbn().equals(id))
                 .findFirst()
                 .orElse(null);
     }

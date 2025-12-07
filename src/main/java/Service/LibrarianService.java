@@ -6,9 +6,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class LibrarianService {
-    private final FileLoanRepository loanRepository = new FileLoanRepository();
 
-    // For testing: allow injecting a fake date
+    private  FileLoanRepository loanRepository = new FileLoanRepository();
+
+    public LibrarianService(){};
+
     public List<Loan> getOverdueLoans() {
         return getOverdueLoans(LocalDate.now());
     }

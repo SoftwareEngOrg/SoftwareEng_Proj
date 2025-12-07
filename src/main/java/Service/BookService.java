@@ -4,10 +4,10 @@ import java.util.List;
 
 public class BookService {
 
-    protected FileBookRepository fileBook = new FileBookRepository();
+    protected FileBookRepository fileBook = FileBookRepository.getInstance();
     private final BookSearchContext searchContext = new BookSearchContext();
 
-    //Applying Strategy pattern
+
     public List<Book> searchByTitle(String title) {
         searchContext.setStrategy(new SearchByTitleStrategy());
         return searchContext.executeSearch(fileBook.findAllBooks(), title);

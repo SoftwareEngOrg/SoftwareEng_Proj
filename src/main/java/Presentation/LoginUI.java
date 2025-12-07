@@ -24,10 +24,12 @@ public class LoginUI {
             String user = cin.nextLine();
             System.out.print("Password: ");
             String pass = cin.nextLine();
-            User foundUser = userRepo.findUser(user, pass);
+            User foundUser = userRepo.findUser(user, pass );
+
 
             if(foundUser != null)
             {
+                System.out.println(foundUser.getEmail());
                 System.out.println("Login successful!");
                 if(foundUser.getRole().equals("admin"))
                 {
@@ -37,13 +39,15 @@ public class LoginUI {
                 }
                 else if(foundUser.getRole().equals("customer"))
                 {
+                    userRepo.updateDate(foundUser);
                     CustomerMenuUI customerMenu = new CustomerMenuUI();
-                    customerMenu.show(foundUser);  // Pass the actual User object!
+                    customerMenu.show(foundUser);
                 }
                 else if(foundUser.getRole().equals("librarian"))
                 {
                     System.out.println("Welcome, Librarian " + foundUser.getUsername() + "!");
-                    new LibrarianMenuUI().show();  // This is the new menu
+                    userRepo.updateDate(foundUser);
+                    new LibrarianMenuUI().show();
                 }
                 nonvalidUser = false;
             }

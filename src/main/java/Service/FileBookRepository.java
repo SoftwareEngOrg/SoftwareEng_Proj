@@ -1,5 +1,6 @@
 package Service;
 import Domain.Book ;
+import Domain.MediaCopy;
 import Domain.MediaItem;
 
 import java.io.*;
@@ -7,29 +8,42 @@ import java.util.*;
 
 public class FileBookRepository {
 
-    public static String repoPath = "books.txt";
-    private List<Book> cachedBooks = new ArrayList<>();
+    static FileBookRepository instance;
+    private static final String FILE_PATH = "books.txt";
+    public static  String repoPath = FILE_PATH;
+    private static List<Book> cachedBooks = new ArrayList<>();
 
-    public FileBookRepository() {
-        loadBooksFromFile(); // Load once when object is created
+
+    private  FileBookRepository() {
+        loadBooksFromFile();
     }
 
-    public void saveBook(Book b)
-    {
-        try(PrintWriter pw = new PrintWriter(new FileWriter(repoPath, true)))
-        {
-            pw.println(b.getTitle() + ";" + b.getAuthor() + ";" + b.getIsbn() + ";" + b.isAvailable());
-            cachedBooks.add(b);
+    private String getFilePath() {
+        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
+    }
+
+    public static synchronized FileBookRepository getInstance() {
+        if (instance == null) {
+            instance = new FileBookRepository();
+        }
+        return instance;
+    }
+
+    public static void saveBook(Book book, int numberOfCopies) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath, true))) {
+
+            pw.println(book.getTitle() + ";" + book.getAuthor() + ";" + book.getIsbn() + ";" + true);
+            cachedBooks.add(book);
+        } catch (Exception e) {
+            System.out.println("Error writing to books file: " + e.getMessage());
         }
 
-        catch(Exception e)
-        {
-            System.out.println("Error writing to books file.");
-        }
+        FileMediaCopyRepository.getInstance().addCopiesByBookIsbn(book.getIsbn(), numberOfCopies, true);
     }
 
     private void loadBooksFromFile() {
-        try (BufferedReader br = new BufferedReader(new FileReader(repoPath))) {
+        cachedBooks.clear();
+        try (BufferedReader br = new BufferedReader(new FileReader(getFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] p = line.split(";");
@@ -43,23 +57,60 @@ public class FileBookRepository {
             System.out.println("Error loading books file.");
         }
     }
+
     public List<Book> findAllBooks() {
         return new ArrayList<>(cachedBooks);
     }
 
     public void updateBooks(MediaItem item) {
         for (Book b : cachedBooks) {
-            if(b.getTitle().equals(item.getTitle()) && b.getAuthor().equals(item.getAuthor()))
-            {
+            if (b.getIsbn().equals(item.getIsbnOrId())) {
                 b.setAvailable(item.isAvailable());
+                b.setTitle(item.getTitle());
+                b.setAuthor(item.getAuthor());
             }
         }
+        saveAllBooksToFile();
+    }
+
+    private void saveAllBooksToFile() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath))) {
             for (Book b : cachedBooks) {
                 pw.println(b.getTitle() + ";" + b.getAuthor() + ";" + b.getIsbn() + ";" + b.isAvailable());
             }
         } catch (Exception e) {
-            System.out.println("Error saving file");
+            System.out.println("Error saving books file");
+        }
+    }
+
+    public void reloadBooks() {
+        loadBooksFromFile();
+    }
+
+    public Book findByIsbn(String isbn) {
+        return findAllBooks().stream()
+                .filter(book -> book.getIsbn().equalsIgnoreCase(isbn.trim()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public void updateBookAvailability(String isbn) {
+        Book book = findByIsbn(isbn);
+        if (book != null) {
+
+            int availableCopies = FileMediaCopyRepository.getInstance()
+                    .getAvailableCopiesCount(isbn);
+
+            boolean wasAvailable = book.isAvailable();
+            boolean nowAvailable = (availableCopies > 0);
+
+            book.setAvailable(nowAvailable);
+            saveAllBooksToFile();
+
+
+            if (!wasAvailable && nowAvailable) {
+                System.out.println("Book is now available - notifying waitlist...");
+            }
         }
     }
 

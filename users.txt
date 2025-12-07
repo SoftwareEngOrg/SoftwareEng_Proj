@@ -1,4 +1,0 @@
-yahya;141186;admin
-ahmad;123;admin
-sami;123;customer
-zuhair;123;librarian

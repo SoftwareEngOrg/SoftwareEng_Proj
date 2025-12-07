@@ -1,55 +1,53 @@
 package Service;
-import org.junit.jupiter.api.*;
-import java.io.*;
-import Domain.User;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
-public class AdminServiceTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+@DisplayName("AdminService Tests")
+class AdminServiceTest {
 
     private AdminService adminService;
 
     @BeforeEach
-    public void setup() throws Exception {
-
-        PrintWriter pw = new PrintWriter(new FileWriter("users_test.txt"));
-        pw.println("ahmad;123;admin");
-        pw.println("yahya;141186;admin");
-        pw.println("yousef;2492004;user");
-        pw.close();
-
-        FileUserRepository.repoPath = "users_test.txt";
-
+    void setUp() {
         adminService = new AdminService();
-
-    }
-
-   /* @Test
-    public void testAdminLoginSuccess()
-    {
-        Assertions.assertTrue(adminService.login("yahya", "141186"));
     }
 
     @Test
-    public void testAdminLoginWrongPassword()
-    {
-        Assertions.assertFalse(adminService.login("yahya", "1234"));
+    @DisplayName("Initially, admin should not be logged in")
+    void testInitialLoggedIn() {
+        assertFalse(adminService.isLoggedIn());
     }
 
-
     @Test
-    public void testAdminLoginNotAdmin()
-    {
-        Assertions.assertFalse(adminService.login("yousef", "2492004"));
+    @DisplayName("Login should set loggedIn to true")
+    void testLogin() {
+        adminService.login("user", "123");
+        assertTrue(adminService.isLoggedIn());
     }
-*/
 
     @Test
-    public void testLogout()
-    {
-        adminService.login("yahya", "141186");
+    @DisplayName("Login should store correct username")
+    void testLoginStoresUsername() {
+        adminService.login("user", "123");
+        assertEquals("user", adminService.getUsername());
+    }
+
+    @Test
+    @DisplayName("Login should store correct password")
+    void testLoginStoresPassword() {
+        adminService.login("user", "123");
+        assertEquals("123", adminService.getPasswowrd());
+    }
+
+    @Test
+    @DisplayName("Logout should set loggedIn to false")
+    void testLogout() {
+        adminService.login("user", "123"); // أولاً نعمل login
         adminService.logout();
-        Assertions.assertFalse(adminService.isLoggedIn());
+        assertFalse(adminService.isLoggedIn());
     }
-
-
 }

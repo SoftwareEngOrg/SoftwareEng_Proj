@@ -22,7 +22,7 @@ public class SearchBookUI
         System.out.println("========================");
 
         System.out.print("Choose: ");
-        int choice = InputValidator.getValidIntegerInput(); // Get validated input
+        int choice = InputValidator.getValidIntegerInput();
         if(choice == 4)
             return;
 

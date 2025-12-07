@@ -22,10 +22,8 @@ public class LibrarianMenuUI {
 
             System.out.print("Choose: ");
             int choice = InputValidator.getValidIntegerInput();
-
-            // Use this to test overdue without changing system date:
             LocalDate today = LocalDate.now();
-            // LocalDate today = LocalDate.now().plusDays(40); // ← Uncomment to simulate overdue
+
 
             switch (choice) {
                 case 1 -> viewAllOverdue(today);

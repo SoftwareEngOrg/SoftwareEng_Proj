@@ -28,7 +28,7 @@ class FileBookRepositoryTest {
     @BeforeEach
     void setUp() {
         // Start fresh before each test
-        repo = new FileBookRepository();
+        repo = FileBookRepository.getInstance();
         repo.findAllBooks().clear(); // Clear cache
         try (PrintWriter pw = new PrintWriter(new FileWriter(tempFile.toString()))) {
             pw.print(""); // Clear file
@@ -45,13 +45,13 @@ class FileBookRepositoryTest {
     void saveBook_addsBookToFileAndCache() {
         Book book = new Book("Clean Code", "Robert Martin", "111");
 
-        repo.saveBook(book);
+        repo.saveBook(book,1);
 
-        // Check cache
+
         assertEquals(1, repo.findAllBooks().size());
         assertEquals("Clean Code", repo.findAllBooks().get(0).getTitle());
 
-        // Check file content
+
         List<String> lines = readAllLines();
         assertEquals(1, lines.size());
         assertEquals("Clean Code;Robert Martin;111;true", lines.get(0));
@@ -60,14 +60,14 @@ class FileBookRepositoryTest {
     @Test
     @DisplayName("loadBooksFromFile() should load books with availability")
     void loadBooksFromFile_loadsCorrectly() throws IOException {
-        // Write test data directly to file
+
         try (PrintWriter pw = new PrintWriter(new FileWriter(tempFile.toString()))) {
             pw.println("1984;George Orwell;999;true");
             pw.println("Java Book;Ahmed;123;false");
         }
 
-        // Create new repo → triggers load
-        FileBookRepository newRepo = new FileBookRepository();
+
+        FileBookRepository newRepo = FileBookRepository.getInstance();
 
         List<Book> books = newRepo.findAllBooks();
         assertEquals(2, books.size());
@@ -82,19 +82,19 @@ class FileBookRepositoryTest {
     @Test
     @DisplayName("updateBooks() should update availability in cache and file")
     void updateBooks_updatesAvailabilityCorrectly() throws IOException {
-        // First, add a book
-        Book originalBook = new Book("Harry Potter", "J.K. Rowling", "777");
-        repo.saveBook(originalBook);
 
-        // Now simulate borrowing: change availability
+        Book originalBook = new Book("Harry Potter", "J.K. Rowling", "777");
+        repo.saveBook(originalBook , 1);
+
+
         originalBook.setAvailable(false);
         repo.updateBooks(originalBook);
 
-        // Check cache
+
         Book cached = repo.findAllBooks().get(0);
         assertFalse(cached.isAvailable());
 
-        // Check file
+
         List<String> lines = readAllLines();
         assertTrue(lines.get(0).endsWith(";false"));
     }
@@ -105,15 +105,15 @@ class FileBookRepositoryTest {
         Book b1 = new Book("Book A", "Author X", "100");
         Book b2 = new Book("Book B", "Author Y", "200");
 
-        repo.saveBook(b1);
-        repo.saveBook(b2);
+        repo.saveBook(b1 , 1);
+        repo.saveBook(b2 , 1);
 
-        // Change availability of first book
+
         b1.setAvailable(false);
         repo.updateBooks(b1);
 
-        // Reload from new instance
-        FileBookRepository repo2 = new FileBookRepository();
+
+        FileBookRepository repo2 = FileBookRepository.getInstance();
 
         List<Book> loaded = repo2.findAllBooks();
         assertEquals(2, loaded.size());
@@ -121,7 +121,7 @@ class FileBookRepositoryTest {
         assertTrue(loaded.get(1).isAvailable());
     }
 
-    // Helper to read file lines
+
     private List<String> readAllLines() {
         try {
             return Files.readAllLines(tempFile);

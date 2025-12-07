@@ -1,11 +1,10 @@
 package Presentation;
 
-import Service.BookService;
-import Service.AdminService;
+import Domain.User;
+import Service.*;
 import Domain.Book;
-import Service.BookServiceAdmin;
-import Service.InputValidator;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class AdminMenuUI {
@@ -25,8 +24,11 @@ public class AdminMenuUI {
         {
             System.out.println("\n====== Admin Menu ======");
             System.out.println("1. Add Book");
-            System.out.println("2. Search Book");
-            System.out.println("3. Logout");
+            System.out.println("2. Add CD");
+            System.out.println("3. Search Book");
+            System.out.println("4. inactive users");
+            System.out.println("5. Reminder");
+            System.out.println("6. Logout");
             System.out.println("=========================");
 
             System.out.print("Choose: ");
@@ -36,12 +38,27 @@ public class AdminMenuUI {
             {
                 new AddBookUI().show(bookService);
             }
-
-            else if (choice == 2)
+            else if(choice == 2)
+            {
+                new AddCDUI().show(bookService);
+            }
+            else if (choice == 3)
             {
                 new SearchBookUI().show(bookService);
             }
-            else if (choice == 3)
+            else if (choice == 4)
+            {
+                viewInactiveUsersUI();
+
+            }
+
+            else if (choice == 5)
+            {
+                Reminder();
+
+            }
+
+            else if (choice == 6)
             {
                 adminService.logout();
                 System.out.println("Logged out!");
@@ -50,6 +67,77 @@ public class AdminMenuUI {
         }
 
     }
+
+    private void Reminder() {
+        System.out.println("\n====== Reminder: Users with Overdue Loans ======");
+
+        ReminderService reminderService = new ReminderService();
+        int overdueCount = reminderService.displayOverdueUsers();
+
+        if (overdueCount == 0) {
+            System.out.println("=".repeat(50));
+            return;
+        }
+        System.out.println("=".repeat(50));
+
+        System.out.print("\nDo you want to send email reminders to all users? (yes/no): ");
+        String choice = cin.nextLine().trim().toLowerCase();
+
+        if (choice.equals("yes") || choice.equals("y")) {
+            reminderService.sendReminders();
+        } else {
+            System.out.println("Reminder cancelled.");
+        }
+
+    }
+
+    private void viewInactiveUsersUI() {
+        List<User> inActiveUsers = bookService.viewInactiveUsers();
+        if (inActiveUsers.isEmpty()) {
+            System.out.println("No inactive users found.");
+        } else {
+            System.out.println("\n====== Inactive Users ======");
+            for (User user : inActiveUsers) {
+                System.out.println(user);
+            }
+            System.out.println("=============================");
+        }
+
+        while (true) {
+            System.out.println("\nChoose an option:");
+            System.out.println("1. Unregister all users");
+            System.out.println("2. Unregister a user by username");
+            System.out.println("3. Go back");
+
+            System.out.print("Choose: ");
+            int choice = InputValidator.getValidIntegerInput();
+            if (choice == 1) {
+                bookService.unregisterAllUsers(inActiveUsers);
+                break;
+            }
+            else if (choice == 2) {
+                System.out.print("Enter username to unregister: ");
+                String username = cin.nextLine();
+                for(User user:inActiveUsers)
+                {
+                    if(user.getUsername().equals(username))
+                    {
+                        bookService.unregisterUserByUsername(username);
+                        break;
+                    }
+                }
+                System.out.print("this user you are trying to unregister is ACTIVE!!");
+                break;
+            }
+            else if (choice == 3) {
+                break;
+            }
+            else {
+                System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
 
 
 

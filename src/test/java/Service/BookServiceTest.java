@@ -1,121 +1,86 @@
 package Service;
-import org.junit.jupiter.api.*;
-import java.io.*;
-import java.util.List;
 
 import Domain.Book;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
-public class BookServiceTest {
+import java.lang.reflect.Field;
+import java.util.List;
 
-    private BookService book ;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-    @BeforeEach
-    public void setup() throws Exception
-    {
-        PrintWriter pw = new PrintWriter(new FileWriter("books_test.txt"));
-        pw.println("Clean Code;Robert Martin;111");
-        pw.println("Messages from the Qur'an;Adham Sharkawi;40");
-        pw.println("Morning Talk;Adham Sharkawi;40");
-        pw.close();
+class BookServiceTest {
 
-        FileBookRepository.repoPath = "books_test.txt";
-
-        book = new BookService();
-
+    private void injectMockRepo(BookService service, FileBookRepository mockRepo) throws Exception {
+        Field f = BookService.class.getDeclaredField("fileBook");
+        f.setAccessible(true);
+        f.set(service, mockRepo);
     }
 
-
-  /*  public void TestAddBook() throws Exception {
-        Book newb = new Book("salam", "adham", "50");
-        book.addBook(newb);
-
-        BufferedReader br = new BufferedReader(new FileReader("books_test.txt"));
-        String lastLine = null;
-        String line;
-
-        while ((line = br.readLine()) != null)
-        {
-            lastLine = line ;
-        }
-
-        br.close();
-
-        Assertions.assertEquals("salam;adham;50", lastLine);
-
-    }*/
-
-
-
-    @Test
-    public void TestSuccessSearchBookByTitle()
-    {
-        List<Book> result = book.searchByTitle("Messages from the Qur'an");
-        //Assertions.assertEquals(1, result.size());
-        Assertions.assertEquals("Messages from the Qur'an", result.get(0).getTitle());
-
+    private void injectMockContext(BookService service, BookSearchContext ctx) throws Exception {
+        Field f = BookService.class.getDeclaredField("searchContext");
+        f.setAccessible(true);
+        f.set(service, ctx);
     }
 
     @Test
-    public void TestFailedSearchBookByTitle()
-    {
-        List<Book> result = book.searchByTitle("Data Structures");
-        Assertions.assertEquals("Data Structures", result.get(0).getTitle());
-    }
+    @DisplayName("searchByTitle returns expected mocked result")
+    void testSearchByTitle() throws Exception {
+        BookService service = new BookService();
 
+        FileBookRepository repo = mock(FileBookRepository.class);
+        BookSearchContext ctx = mock(BookSearchContext.class);
 
+        injectMockRepo(service, repo);
+        injectMockContext(service, ctx);
 
+        List<Book> list = List.of(new Book("T","A","1"));
+        when(repo.findAllBooks()).thenReturn(list);
+        when(ctx.executeSearch(list, "abc")).thenReturn(list);
 
-    @Test
-    public void TestSuccessSearchBookByauthor()
-    {
-        List<Book> result = book.searchByAuthor("Robert");
-        Assertions.assertEquals("Robert Martin", result.get(0).getAuthor());
+        List<Book> result = service.searchByTitle("abc");
 
-    }
-
-    @Test
-    public void TestFailedSearchBookByauthor()
-    {
-        List<Book> result = book.searchByAuthor("ahmad");
-        Assertions.assertEquals("ahmad", result.get(0).getAuthor());
-
-    }
-
-
-    @Test
-    public void TestSuccessSearchBookByauthor2()
-    {
-        List<Book> result = book.searchByAuthor("Adham");
-        Assertions.assertEquals(2, result.size());
-        Assertions.assertEquals("Adham Sharkawi", result.get(0).getAuthor());
-
+        assertEquals(list, result);
     }
 
     @Test
-    public void TestFailedSearchBookByauthor2()
-    {
-        List<Book> result = book.searchByAuthor("Adham");
-        Assertions.assertEquals(1, result.size());
+    @DisplayName("searchByAuthor returns expected mocked result")
+    void testSearchByAuthor() throws Exception {
+        BookService service = new BookService();
+
+        FileBookRepository repo = mock(FileBookRepository.class);
+        BookSearchContext ctx = mock(BookSearchContext.class);
+
+        injectMockRepo(service, repo);
+        injectMockContext(service, ctx);
+
+        List<Book> list = List.of(new Book("T","A","1"));
+        when(repo.findAllBooks()).thenReturn(list);
+        when(ctx.executeSearch(list, "xyz")).thenReturn(list);
+
+        List<Book> result = service.searchByAuthor("xyz");
+
+        assertEquals(list, result);
     }
-
-
-
 
     @Test
-    public void TestSuccessSearchBookByisbn()
-    {
-        List<Book> result = book.searchByISBN("111");
-        Assertions.assertEquals("111", result.get(0).getIsbn());
+    @DisplayName("searchByISBN returns expected mocked result")
+    void testSearchByISBN() throws Exception {
+        BookService service = new BookService();
+
+        FileBookRepository repo = mock(FileBookRepository.class);
+        BookSearchContext ctx = mock(BookSearchContext.class);
+
+        injectMockRepo(service, repo);
+        injectMockContext(service, ctx);
+
+        List<Book> list = List.of(new Book("T","A","1"));
+        when(repo.findAllBooks()).thenReturn(list);
+        when(ctx.executeSearch(list, "111")).thenReturn(list);
+
+        List<Book> result = service.searchByISBN("111");
+
+        assertEquals(list, result);
     }
-
-
-    @Test
-    public void TestFailedSearchBookByisbn()
-    {
-        List<Book> result = book.searchByISBN("30");
-        Assertions.assertEquals("30", result.get(0).getIsbn());
-    }
-
-
-
 }

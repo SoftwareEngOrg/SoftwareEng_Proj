@@ -7,7 +7,7 @@ public class Book extends MediaItem {
     private String isbn;
 
     public Book(String title, String author, String isbn) {
-        super(title, author); // Call the constructor of MediaItem
+        super(title, author);
         this.isbn = isbn;
     }
 
@@ -24,10 +24,11 @@ public class Book extends MediaItem {
         return 10;
     }
 
+
     @Override
-    public String toString()
-    {
-        return ("Title:" + this.getTitle() + " | " + "Author:" + getAuthor() + " | " + "Isbn:" + isbn + " | " + isAvailable());
+    public String toString() {
+        return ("Title:" + this.getTitle() + " | " + "Author:" + this.getAuthor() + " | " + "Isbn:" + this.isbn + " | " + (this.isAvailable() ? "Available" : "Borrowed"));
     }
+
 
 }

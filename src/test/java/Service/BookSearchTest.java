@@ -118,7 +118,7 @@ class BookSearchTest {
     void bookSearchContext_executesStrategy() {
         BookSearchContext context = new BookSearchContext();
 
-        List<Book> allBooks = new FileBookRepository().findAllBooks();
+        List<Book> allBooks =  FileBookRepository.getInstance().findAllBooks();
 
         context.setStrategy(new SearchByTitleStrategy());
         assertFalse(context.executeSearch(allBooks, "clean").isEmpty());

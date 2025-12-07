@@ -43,7 +43,7 @@ class FileLoanRepositoryTest {
         book.setAvailable(true);
 
         // Save the book so it exists in the repo
-        new FileBookRepository().saveBook(book);
+        FileBookRepository.getInstance().saveBook(book , 1);
         repo = new FileLoanRepository();  // reload so book is cached
     }
 
@@ -72,7 +72,7 @@ class FileLoanRepositoryTest {
     @DisplayName("borrowItem throws exception when item is not available")
     void borrowItem_whenNotAvailable_throwsException() {
         book.setAvailable(false);
-        new FileBookRepository().updateBooks(book);  // save the unavailable state
+        FileBookRepository.getInstance().updateBooks(book);  // save the unavailable state
 
         assertThrows(IllegalStateException.class, () -> {
             repo.borrowItem(alice, book);
@@ -112,7 +112,7 @@ class FileLoanRepositoryTest {
 
         User bob = new User("bob", "456", "customer");
         Book book2 = new Book("Python", "B", "888");
-        new FileBookRepository().saveBook(book2);
+        FileBookRepository.getInstance().saveBook(book2 , 1);
         repo = new FileLoanRepository();
         repo.borrowItem(bob, book2);
 
