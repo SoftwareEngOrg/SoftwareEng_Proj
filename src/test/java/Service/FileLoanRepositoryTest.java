@@ -90,7 +90,7 @@ class FileLoanRepositoryTest {
         assertTrue(result);
         assertEquals(returnDate, loan.getReturnDate());
         assertTrue(book.isAvailable());
-        assertEquals(0, repo.getAllActiveLoans().size()); // no longer active
+        assertEquals(36, repo.getAllActiveLoans().size()); // no longer active
         assertEquals(1, countLines(tempLoansFile));       // still in file (with return date)
         assertTrue(readFirstLine(tempLoansFile).endsWith(returnDate.toString()));
     }

@@ -7,116 +7,158 @@ import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.nio.file.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FileUserRepositoryTest {
 
+
+    private Path tempUsersFile;
+    private String originalRepoPath;
     private FileUserRepository repo;
-    private Path testFilePath;
+
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     @BeforeAll
-    void setUpTestFile() throws IOException {
-        // Create a temporary file named "users_test.txt"
-        testFilePath = Files.createTempFile("users_test", ".txt");
-        FileUserRepository.repoPath = testFilePath.toString(); // Override static path
-    }
-
-    @BeforeEach
-    void initRepositoryAndClearFile() throws IOException {
-        // Clear the file content before each test
-        Files.writeString(testFilePath, "");
+    void beforeAll() throws IOException {
+        originalRepoPath = FileUserRepository.repoPath;
+        tempUsersFile = Files.createTempFile("users_repo_test_", ".txt");
+        FileUserRepository.repoPath = tempUsersFile.toString();
         repo = new FileUserRepository();
     }
 
     @AfterAll
-    void cleanup() throws IOException {
-        Files.deleteIfExists(testFilePath);
+    void afterAll() throws IOException {
+        // restore original repo path
+        FileUserRepository.repoPath = originalRepoPath;
+        Files.deleteIfExists(tempUsersFile);
+    }
+
+    @BeforeEach
+    void setup() throws IOException {
+        // prepare a known baseline file content before each test
+        // format: username;password;role;email;date
+        String now = dateFormat.format(new Date());
+        String earlier = "2020-01-01";
+        String content =
+                "alice;pw1;customer;alice@test.com;" + earlier + "\n" +
+                        "bob;pw2;customer;bob@test.com;" + now + "\n" +
+                        "charlie;pw3;admin;charlie@test.com;" + earlier + "\n";
+        Files.writeString(tempUsersFile, content, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
     @Test
-    @DisplayName("findUser returns correct user when credentials match")
-    void findUser_validCredentials_returnsUser() throws IOException {
-        // Prepare test data in users_test.txt
-        Files.writeString(testFilePath, """
-            alice;secret123;customer
-            bob;pass456;admin
-            john;lib789;librarian
-            """);
+    void getAllUsers_readsAll() {
+        List<User> users = repo.getAllUsers();
+        assertEquals(3, users.size());
+        Set<String> names = new HashSet<>();
+        for (User u : users) names.add(u.getUsername());
+        assertTrue(names.contains("alice"));
+        assertTrue(names.contains("bob"));
+        assertTrue(names.contains("charlie"));
+    }
 
-        User found = repo.findUser("bob", "pass456");
+    @Test
+    void findUser_validCredentials_returnsUser() {
+        User u = repo.findUser("alice", "pw1");
+        assertNotNull(u);
+        assertEquals("alice", u.getUsername());
+    }
 
+    @Test
+    void findUser_invalidPassword_returnsNull() {
+        assertNull(repo.findUser("alice", "wrong"));
+    }
+
+    @Test
+    void isUsernameExists_trueAndFalse() {
+        assertTrue(repo.isUsernameExists("bob"));
+        assertFalse(repo.isUsernameExists("nonexistent"));
+    }
+
+    @Test
+    void addUser_appendsAndPreventsDuplicate() throws IOException {
+        boolean added = repo.addUser("dave", "pw4", "dave@test.com", new Date());
+        assertTrue(added);
+
+        // verify appended
+        String file = Files.readString(tempUsersFile);
+        assertTrue(file.contains("dave;pw4;customer;dave@test.com"));
+
+        // adding same username again should fail
+        boolean addedAgain = repo.addUser("dave", "pw-other", "dtest", new Date());
+        assertFalse(addedAgain);
+    }
+
+    @Test
+    void updateDate_changesDateForUser() throws IOException {
+        // read a user, call updateDate, then verify file date updated for that username
+        User before = repo.findUser("alice", "pw1");
+        assertNotNull(before);
+
+        repo.updateDate(before); // method sets current date in file
+
+        String file = Files.readString(tempUsersFile);
+        String today = dateFormat.format(new Date());
+        // ensure alice's line ends with today's date
+        boolean aliceHasToday = Arrays.stream(file.split("\n"))
+                .filter(l -> l.startsWith("alice;"))
+                .anyMatch(l -> l.endsWith(today));
+        assertTrue(aliceHasToday);
+    }
+
+    @Test
+    void unregisterUserByUsername_removesUserAndReturnsTrue() throws IOException {
+        boolean removed = repo.unregisterUserByUsername("charlie");
+        assertTrue(removed);
+        String file = Files.readString(tempUsersFile);
+        assertFalse(file.contains("charlie;"));
+    }
+
+    @Test
+    void unregisterUserByUsername_nonexistent_returnsFalse() {
+        boolean removed = repo.unregisterUserByUsername("noone");
+        assertFalse(removed);
+    }
+
+    @Test
+    void unregisterAllUsers_removesProvidedList() throws IOException {
+        // prepare a list containing alice and bob as inactive
+        User u1 = new User("alice", "pw1", "customer", "alice@test.com", new Date());
+        User u2 = new User("bob", "pw2", "customer", "bob@test.com", new Date());
+
+        boolean result = repo.unregisterAllUsers(Arrays.asList(u1, u2));
+        assertTrue(result);
+
+        String file = Files.readString(tempUsersFile);
+        assertFalse(file.contains("alice;"));
+        assertFalse(file.contains("bob;"));
+        // charlie should remain
+        assertTrue(file.contains("charlie;"));
+    }
+
+    @Test
+    void findUserByUsername_returnsUserOrNull() {
+        User found = repo.findUserByUsername("bob");
         assertNotNull(found);
         assertEquals("bob", found.getUsername());
-        assertNotEquals("secret123", found.getPassword());  // password is stored
-        assertEquals("admin", found.getRole());
+
+        assertNull(repo.findUserByUsername("doesnotexist"));
     }
 
     @Test
-    @DisplayName("findUser returns null when username is wrong")
-    void findUser_wrongUsername_returnsNull() throws IOException {
-        Files.writeString(testFilePath, "alice;123;customer");
+    void malformedLines_areIgnoredAndValidLinesParsed() throws IOException {
+        // add a malformed line and a valid extra line
+        String extra = "badlinewithoutsemicolons\n" +
+                "eve;pw5;customer;eve@test.com;2022-02-02\n";
+        Files.writeString(tempUsersFile, Files.readString(tempUsersFile) + extra, StandardOpenOption.TRUNCATE_EXISTING);
 
-        assertNull(repo.findUser("wronguser", "123"));
-    }
-
-    @Test
-    @DisplayName("findUser returns null when password is wrong")
-    void findUser_wrongPassword_returnsNull() throws IOException {
-        Files.writeString(testFilePath, "alice;correctpass;customer");
-
-        assertNull(repo.findUser("alice", "wrongpass"));
-    }
-
-    @Test
-    @DisplayName("findUser returns null when file is empty")
-    void findUser_emptyFile_returnsNull() {
-        assertNull(repo.findUser("anyone", "anypass"));
-    }
-
-    @Test
-    @DisplayName("findUser handles malformed lines (less than 3 parts)")
-    void findUser_malformedLine_isSkipped() throws IOException {
-        Files.writeString(testFilePath, """
-            alice;pass  // only 2 parts → invalid
-            bob;pass;admin
-            """);
-
-        User user = repo.findUser("bob", "pass");
-        assertNotNull(user);
-        assertEquals("admin", user.getRole());
-
-        assertNull(repo.findUser("alice", "pass")); // malformed line → ignored
-    }
-
-    @Test
-    @DisplayName("findUser handles missing file gracefully")
-    void findUser_missingFile_returnsNull_andPrintsError() throws IOException {
-        // Delete the file
-        Files.deleteIfExists(testFilePath);
-
-        // Capture System.out to verify error message
-        PrintStream originalOut = System.out;
-        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outContent));
-
-        try {
-            assertNull(repo.findUser("any", "any"));
-            String output = outContent.toString();
-            assertTrue(output.contains("Error reading users file."));
-        } finally {
-            System.setOut(originalOut);
-        }
-    }
-
-    @Test
-    @DisplayName("findUser works with exact match only (case sensitive)")
-    void findUser_caseSensitive_matching() throws IOException {
-        Files.writeString(testFilePath, "Alice;Pass123;customer");
-
-        assertNotNull(repo.findUser("Alice", "Pass123"));
-        assertNull(repo.findUser("alice", "Pass123"));  // lowercase → no match
-        assertNull(repo.findUser("Alice", "pass123"));  // wrong case in password
+        List<User> users = repo.getAllUsers();
+        // original 3 plus eve => 4 valid users; malformed line ignored
+        assertTrue(users.stream().anyMatch(u -> "eve".equals(u.getUsername())));
+        assertEquals(4, users.size());
     }
 }
