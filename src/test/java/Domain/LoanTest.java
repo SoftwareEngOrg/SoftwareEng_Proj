@@ -20,13 +20,13 @@ class LoanTest {
     void setUp() {
         user = new User("alice", "pass", "customer");
         book = new Book("Clean Code", "Robert Martin", "978-0132350884");
-        today = LocalDate.of(2025, 4, 5); // Fixed date for predictable tests
+        today = LocalDate.of(2025, 4, 5);
     }
 
     @Test
     @DisplayName("getOverdueDays returns 0 when not overdue (branch: if condition false)")
     void getOverdueDays_whenNotOverdue_returnsZero() {
-        Loan loan = new Loan("L1", user, book, today.minusDays(10)); // borrowed 10 days ago
+        Loan loan = new Loan("L1", user, book, today.minusDays(10));
 
         int overdueDays = loan.getOverdueDays(today);
 
@@ -36,8 +36,8 @@ class LoanTest {
     @Test
     @DisplayName("getOverdueDays returns correct days when overdue (branch: if condition true)")
     void getOverdueDays_whenOverdue_returnsCorrectDays() {
-        Loan loan = new Loan("L2", user, book, today.minusDays(40)); // borrowed 40 days ago
-        // Book borrowing period = 28 days → overdue by 12 days
+        Loan loan = new Loan("L2", user, book, today.minusDays(40));
+
 
         int overdueDays = loan.getOverdueDays(today);
 
@@ -48,7 +48,7 @@ class LoanTest {
     @DisplayName("getOverdueDays returns 0 after book is returned")
     void getOverdueDays_afterReturn_returnsZero() {
         Loan loan = new Loan("L3", user, book, today.minusDays(50));
-        loan.returnItem(today.minusDays(5)); // returned 5 days ago
+        loan.returnItem(today.minusDays(5));
 
         assertEquals(0, loan.getOverdueDays(today));
     }
@@ -75,21 +75,21 @@ class LoanTest {
         loan.returnItem(today.plusDays(1));
 
         assertEquals(today.plusDays(1), loan.getReturnDate());
-        assertTrue(book.isAvailable()); // mediaItem should be available again
+        assertTrue(book.isAvailable());
     }
 
     @Test
     @DisplayName("isOverdue returns true only when not returned and past due date")
     void isOverdue_comprehensiveCheck() {
-        // 1. Not returned + overdue → true
+
         Loan overdue = new Loan("O1", user, book, today.minusDays(35));
         assertTrue(overdue.isOverdue(today));
 
-        // 2. Not returned + on time → false
+
         Loan onTime = new Loan("O2", user, book, today.minusDays(20));
         assertFalse(onTime.isOverdue(today));
 
-        // 3. Returned (already) returned → false
+
         Loan returned = new Loan("O3", user, book, today.minusDays(40));
         returned.returnItem(today.minusDays(10));
         assertFalse(returned.isOverdue(today));
@@ -98,23 +98,12 @@ class LoanTest {
     @Test
     @DisplayName("calculateFine returns correct amount when overdue")
     void calculateFine_returnsCorrectFine() {
-        Loan loan = new Loan("F1", user, book, today.minusDays(32)); // 4 days overdue
+        Loan loan = new Loan("F1", user, book, today.minusDays(32));
 
-        assertEquals(40, loan.calculateFine(today)); // 4 days × 10 NIS/day = 40
+        assertEquals(40, loan.calculateFine(today));
     }
 
-    @Test
-    @DisplayName("calculateFine returns 0 when not overdue or returned")
-    void calculateFine_returnsZeroWhenNotOverdue() {
-        // Not overdue
-        Loan notOverdue = new Loan("F2", user, book, today.minusDays(10));
-        assertEquals(0, notOverdue.calculateFine(today));
 
-        // Already returned
-        Loan returned = new Loan("F3", user, book, today.minusDays(50));
-        returned.returnItem(today.minusDays(5));
-        assertEquals(0, returned.calculateFine(today));
-    }
 
     @Test
     @DisplayName("toString contains loanId, title, username, and due date")

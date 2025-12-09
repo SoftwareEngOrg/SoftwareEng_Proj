@@ -11,7 +11,7 @@ public class MediaCopyTest {
         return new Book("T1", "A1", "ISBN1");
     }
 
-    // ========== Constructor Tests ==========
+
 
     @Test
     @DisplayName("MediaCopy: constructor sets fields and default availability=true")
@@ -28,7 +28,7 @@ public class MediaCopyTest {
     }
 
 
-    // ========== Getter & Setter: copyId ==========
+
 
     @Test
     @DisplayName("MediaCopy: getCopyId returns initial value")
@@ -46,7 +46,7 @@ public class MediaCopyTest {
     }
 
 
-    // ========== Getter & Setter: mediaItem ==========
+
 
     @Test
     @DisplayName("MediaCopy: getMediaItem returns correct MediaItem")
@@ -69,7 +69,7 @@ public class MediaCopyTest {
     }
 
 
-    // ========== Getter & Setter: available ==========
+
 
     @Test
     @DisplayName("MediaCopy: isAvailable returns correct value")
@@ -87,7 +87,7 @@ public class MediaCopyTest {
     }
 
 
-    // ========== toString Test ==========
+
 
     @Test
     @DisplayName("MediaCopy: toString contains correct formatted data")

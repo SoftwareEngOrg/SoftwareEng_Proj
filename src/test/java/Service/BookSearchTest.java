@@ -19,12 +19,12 @@ class BookSearchTest {
     @BeforeAll
     void setUpTestFile() throws IOException {
         tempBookFile = Files.createTempFile("books_test", ".txt");
-        FileBookRepository.repoPath = tempBookFile.toString(); // override static path
+        FileBookRepository.repoPath = tempBookFile.toString();
     }
 
     @BeforeEach
     void init() throws IOException {
-        // Clear and populate test data
+
         String testData = """
             Clean Code;Robert Martin;978-0134685991;true
             The Pragmatic Programmer;Andrew Hunt;978-0201616224;true
@@ -34,7 +34,7 @@ class BookSearchTest {
             """;
 
         Files.writeString(tempBookFile, testData);
-        bookService = new BookService(); // loads from temp file
+        bookService = new BookService();
     }
 
     @AfterAll
@@ -84,14 +84,14 @@ class BookSearchTest {
     void searchByISBN_exactMatch_caseInsensitive() {
         List<Book> results = bookService.searchByISBN("978-0134685991");
 
-        assertEquals(2, results.size()); // Two books have same ISBN (intentional test case)
+        assertEquals(2, results.size());
 
         results = bookService.searchByISBN("978-0201616224");
         assertEquals(1, results.size());
         assertEquals("The Pragmatic Programmer", results.get(0).getTitle());
 
         results = bookService.searchByISBN("978-0134685991".toUpperCase());
-        assertEquals(2, results.size()); // case insensitive
+        assertEquals(2, results.size());
     }
 
     @Test
@@ -103,13 +103,13 @@ class BookSearchTest {
     @Test
     @DisplayName("Multiple strategies work correctly through BookService")
     void bookService_usesDifferentStrategies_correctly() {
-        // Title search
+
         assertTrue(bookService.searchByTitle("effective").size() == 1);
 
-        // Author search
+
         assertTrue(bookService.searchByAuthor("Bloch").size() == 1);
 
-        // ISBN search
+
         assertTrue(bookService.searchByISBN("978-0321349606").size() == 1);
     }
 
