@@ -29,9 +29,21 @@ public class FileBookRepository {
         return instance;
     }
 
-    public static void saveBook(Book book, int numberOfCopies) {
+    /*public static void saveBook(Book book, int numberOfCopies) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath, true))) {
 
+            pw.println(book.getTitle() + ";" + book.getAuthor() + ";" + book.getIsbn() + ";" + true);
+            cachedBooks.add(book);
+        } catch (Exception e) {
+            System.out.println("Error writing to books file: " + e.getMessage());
+        }
+
+        FileMediaCopyRepository.getInstance().addCopiesByBookIsbn(book.getIsbn(), numberOfCopies, true);
+    }*/
+
+    public static void saveBook(Book book, int numberOfCopies) {
+        FileBookRepository instance = getInstance();
+        try (PrintWriter pw = new PrintWriter(new FileWriter(instance.getFilePath(), true))) {
             pw.println(book.getTitle() + ";" + book.getAuthor() + ";" + book.getIsbn() + ";" + true);
             cachedBooks.add(book);
         } catch (Exception e) {
@@ -74,7 +86,7 @@ public class FileBookRepository {
     }
 
     private void saveAllBooksToFile() {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath))) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(getFilePath()))) {
             for (Book b : cachedBooks) {
                 pw.println(b.getTitle() + ";" + b.getAuthor() + ";" + b.getIsbn() + ";" + b.isAvailable());
             }

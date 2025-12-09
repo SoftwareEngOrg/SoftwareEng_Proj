@@ -8,9 +8,11 @@ import java.util.HashSet;
 import java.util.List;
 
 public class BookServiceAdmin extends BookService {
-    private FileLoanRepository loanFile = new FileLoanRepository();
-    private FileUserRepository userFile = new FileUserRepository();
-    private FileCDRepository fileCD = FileCDRepository.getInstance();
+    private final FileLoanRepository loanFile = new FileLoanRepository();
+    private final FileUserRepository userFile = new FileUserRepository();
+    private final FileCDRepository fileCD = FileCDRepository.getInstance();
+
+
 
     public boolean addBook(Book book, int numberOfCopies) {
         if (numberOfCopies <= 0) return false;

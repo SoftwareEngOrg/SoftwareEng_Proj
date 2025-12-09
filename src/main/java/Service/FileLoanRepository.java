@@ -97,7 +97,7 @@ public class FileLoanRepository {
     }
 
     private void saveToFile() {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_PATH))) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(getFilePath()))) {
             for (Loan loan : loans) {
                 String returnDateStr = loan.getReturnDate() == null ? "NULL" : loan.getReturnDate().toString();
                 String line = String.format("%s;%s;%s;%s;%s",
@@ -117,7 +117,7 @@ public class FileLoanRepository {
     private void loadLoans()
     {
         loans.clear();
-        File file = new File(FILE_PATH);
+        File file = new File(getFilePath());
         if (!file.exists()) return;
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {

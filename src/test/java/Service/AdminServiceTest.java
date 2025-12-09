@@ -46,7 +46,7 @@ class AdminServiceTest {
     @Test
     @DisplayName("Logout should set loggedIn to false")
     void testLogout() {
-        adminService.login("user", "123"); // أولاً نعمل login
+        adminService.login("user", "123");
         adminService.logout();
         assertFalse(adminService.isLoggedIn());
     }

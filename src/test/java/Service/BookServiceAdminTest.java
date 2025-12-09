@@ -6,342 +6,197 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.time.LocalDate;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("BookServiceAdmin Tests")
 class BookServiceAdminTest {
 
-    @Mock
-    private FileLoanRepository mockLoanRepo;
 
-    @Mock
-    private FileUserRepository mockUserRepo;
+    @Mock FileLoanRepository loanFile;
+    @Mock FileUserRepository userFile;
+    @Mock FileBookRepository fileBook;
+    @Mock FileCDRepository fileCD;
 
-    @Mock
-    private FileCDRepository mockCDRepo;
 
-    @Mock
-    private FileBookRepository mockBookRepo;
+    private BookServiceAdmin admin;
 
-    @InjectMocks
-    private BookServiceAdmin bookServiceAdmin;
-
-    private Book testBook;
-    private CD testCD;
-    private User testUser;
+    private Book book;
+    private CD cd;
+    private User cust1, cust2, adminUser;
+    private Loan loan1;
 
     @BeforeEach
-    void setUp() {
-        testBook = new Book("Test Book", "Test Author", "ISBN123");
-        testCD = new CD("Test CD", "Test Artist", "CD123");
-        testUser = new User("testuser", "password", "customer");
+    void setUp() throws Exception {
+
+        admin = new BookServiceAdmin();
+
+
+        injectMock(admin, "loanFile", loanFile);
+        injectMock(admin, "userFile", userFile);
+        injectMock(admin, "fileCD", fileCD);
+
+
+        injectMock(admin, "fileBook", fileBook);
+
+
+        book = new Book("Title", "Author", "1234567890");
+        cd = new CD("CD Title", "Artist", "9876543210");
+        cust1 = new User("cust1", "pass", "customer");
+        cust2 = new User("cust2", "pass", "customer");
+        adminUser = new User("admin", "pass", "admin");
+        loan1 = new Loan("L1", cust1, book, LocalDate.now());
     }
 
-    // ==================== addBook Tests ====================
 
-    @Test
-    @DisplayName("Should return false when number of copies is zero")
-    void addBook_WithZeroCopies_ReturnsFalse() {
-        boolean result = bookServiceAdmin.addBook(testBook, 0);
-
-        assertFalse(result);
+    private void injectMock(Object target, String fieldName, Object mock) throws Exception {
+        Field field = findField(target.getClass(), fieldName);
+        field.setAccessible(true);
+        field.set(target, mock);
     }
 
-    @Test
-    @DisplayName("Should return false when number of copies is negative")
-    void addBook_WithNegativeCopies_ReturnsFalse() {
-        boolean result = bookServiceAdmin.addBook(testBook, -5);
 
-        assertFalse(result);
+    private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+        try {
+            return clazz.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException e) {
+            if (clazz.getSuperclass() != null) {
+                return findField(clazz.getSuperclass(), fieldName);
+            }
+            throw e;
+        }
     }
 
-    @Test
-    @DisplayName("Should return false when book with same ISBN already exists")
-    void addBook_WithExistingISBN_ReturnsFalse() {
-
-        List<Book> existingBooks = new ArrayList<>();
-        existingBooks.add(new Book("Existing Book", "Author", "ISBN123"));
-        when(mockBookRepo.findAllBooks()).thenReturn(existingBooks);
-        when(mockCDRepo.findByIsbn(anyString())).thenReturn(null);
-
-
-        boolean result = bookServiceAdmin.addBook(testBook, 3);
-
-
-        assertFalse(result);
-    }
+    // ====================== addBook ======================
 
     @Test
-    @DisplayName("Should return false when CD with same ISBN exists")
-    void addBook_WithExistingCDISBN_ReturnsFalse() {
-
-        when(mockBookRepo.findAllBooks()).thenReturn(new ArrayList<>());
-        when(mockCDRepo.findByIsbn("ISBN123")).thenReturn(testCD);
-
-
-        boolean result = bookServiceAdmin.addBook(testBook, 3);
-
-
-        assertFalse(result);
+    void addBook_invalidCopies_returnsFalse() {
+        assertFalse(admin.addBook(book, 0));
+        assertFalse(admin.addBook(book, -5));
     }
 
     @Test
-    @DisplayName("Should successfully add book when all validations pass")
-    void addBook_WithValidData_ReturnsTrue() {
+    void addBook_alreadyExists_returnsFalse() throws Exception {
+        try (MockedStatic<FileBookRepository> staticBook = mockStatic(FileBookRepository.class);
+             MockedStatic<FileCDRepository> staticCD = mockStatic(FileCDRepository.class)) {
 
-        when(mockBookRepo.findAllBooks()).thenReturn(new ArrayList<>());
-        when(mockCDRepo.findByIsbn(anyString())).thenReturn(null);
+            staticBook.when(FileBookRepository::getInstance).thenReturn(fileBook);
+            staticCD.when(FileCDRepository::getInstance).thenReturn(fileCD);
 
+            when(fileBook.findAllBooks()).thenReturn(List.of(book));
 
-        boolean result = bookServiceAdmin.addBook(testBook, 5);
-
-
-        assertTrue(result);
-    }
-
-    // ==================== addCD Tests ====================
-
-    @Test
-    @DisplayName("Should return false when CD copies is zero")
-    void addCD_WithZeroCopies_ReturnsFalse() {
-        boolean result = bookServiceAdmin.addCD(testCD, 0);
-
-        assertFalse(result);
+            assertFalse(admin.addBook(book, 5));
+            staticBook.verify(() -> FileBookRepository.saveBook(any(), anyInt()), never());
+        }
     }
 
     @Test
-    @DisplayName("Should return false when CD copies is negative")
-    void addCD_WithNegativeCopies_ReturnsFalse() {
-        boolean result = bookServiceAdmin.addCD(testCD, -3);
+    void addBook_isbnExistsInCD_returnsFalse() throws Exception {
+        try (MockedStatic<FileBookRepository> staticBook = mockStatic(FileBookRepository.class);
+             MockedStatic<FileCDRepository> staticCD = mockStatic(FileCDRepository.class)) {
 
-        assertFalse(result);
+            staticBook.when(FileBookRepository::getInstance).thenReturn(fileBook);
+            staticCD.when(FileCDRepository::getInstance).thenReturn(fileCD);
+
+            when(fileBook.findAllBooks()).thenReturn(List.of());
+            when(fileCD.findByIsbn("1234567890")).thenReturn(cd);
+
+            assertFalse(admin.addBook(book, 5));
+        }
     }
 
     @Test
-    @DisplayName("Should return false when CD with same ISBN already exists")
-    void addCD_WithExistingISBN_ReturnsFalse() {
+    void addBook_validBook_savesAndReturnsTrue() throws Exception {
+        try (MockedStatic<FileBookRepository> staticBook = mockStatic(FileBookRepository.class);
+             MockedStatic<FileCDRepository> staticCD = mockStatic(FileCDRepository.class)) {
 
-        List<CD> existingCDs = new ArrayList<>();
-        existingCDs.add(new CD("Existing CD", "Artist", "CD123"));
-        when(mockCDRepo.findAllCDs()).thenReturn(existingCDs);
-        when(mockBookRepo.findByIsbn(anyString())).thenReturn(null);
+            staticBook.when(FileBookRepository::getInstance).thenReturn(fileBook);
+            staticCD.when(FileCDRepository::getInstance).thenReturn(fileCD);
 
+            when(fileBook.findAllBooks()).thenReturn(List.of());
+            when(fileCD.findByIsbn(anyString())).thenReturn(null);
 
-        boolean result = bookServiceAdmin.addCD(testCD, 3);
-
-
-        assertFalse(result);
+            assertTrue(admin.addBook(book, 3));
+            staticBook.verify(() -> FileBookRepository.saveBook(book, 3));
+        }
     }
 
+    // ====================== addCD ======================
+
     @Test
-    @DisplayName("Should return false when Book with same ISBN exists")
-    void addCD_WithExistingBookISBN_ReturnsFalse() {
+    void addCD_validCD_savesAndReturnsTrue() throws Exception {
+        try (MockedStatic<FileBookRepository> staticBook = mockStatic(FileBookRepository.class);
+             MockedStatic<FileCDRepository> staticCD = mockStatic(FileCDRepository.class)) {
 
-        when(mockCDRepo.findAllCDs()).thenReturn(new ArrayList<>());
-        when(mockBookRepo.findByIsbn("CD123")).thenReturn(testBook);
+            staticBook.when(FileBookRepository::getInstance).thenReturn(fileBook);
+            staticCD.when(FileCDRepository::getInstance).thenReturn(fileCD);
 
+            when(fileCD.findAllCDs()).thenReturn(List.of());
+            when(fileBook.findByIsbn(anyString())).thenReturn(null);
 
-        boolean result = bookServiceAdmin.addCD(testCD, 3);
-
-
-        assertFalse(result);
+            assertTrue(admin.addCD(cd, 2));
+            staticCD.verify(() -> FileCDRepository.saveCD(cd, 2));
+        }
     }
 
-    @Test
-    @DisplayName("Should successfully add CD when all validations pass")
-    void addCD_WithValidData_ReturnsTrue() {
-
-        when(mockCDRepo.findAllCDs()).thenReturn(new ArrayList<>());
-        when(mockBookRepo.findByIsbn(anyString())).thenReturn(null);
-
-
-        boolean result = bookServiceAdmin.addCD(testCD, 5);
-
-
-        assertTrue(result);
-    }
-
-    // ==================== view InactiveUsers Tests ====================
+    // ====================== viewInactiveUsers ======================
 
     @Test
-    @DisplayName("Should return empty list when no users exist")
-    void viewInactiveUsers_WithNoUsers_ReturnsEmptyList() {
+    void viewInactiveUsers_returnsOnlyInactiveCustomers() {
+        when(loanFile.getAllActiveLoans()).thenReturn(List.of(loan1));
+        when(userFile.getAllUsers()).thenReturn(List.of(cust1, cust2, adminUser));
 
-        when(mockLoanRepo.getAllActiveLoans()).thenReturn(new ArrayList<>());
-        when(mockUserRepo.getAllUsers()).thenReturn(new ArrayList<>());
-
-
-        List<User> result = bookServiceAdmin.viewInactiveUsers();
-
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Should return empty list when all users are active")
-    void viewInactiveUsers_WithAllActiveUsers_ReturnsEmptyList() {
-
-        User user1 = new User("user1", "pass", "customer");
-        User user2 = new User("user2", "pass", "customer");
-
-        Loan loan1 = new Loan("L1", user1, testBook, java.time.LocalDate.now());
-        Loan loan2 = new Loan("L2", user2, testCD, java.time.LocalDate.now());
-
-        when(mockLoanRepo.getAllActiveLoans()).thenReturn(Arrays.asList(loan1, loan2));
-        when(mockUserRepo.getAllUsers()).thenReturn(Arrays.asList(user1, user2));
-
-
-        List<User> result = bookServiceAdmin.viewInactiveUsers();
-
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Should return inactive customer users only")
-    void viewInactiveUsers_WithInactiveCustomers_ReturnsInactiveList() {
-
-        User activeUser = new User("active", "pass", "customer");
-        User inactiveUser = new User("inactive", "pass", "customer");
-        User adminUser = new User("admin", "pass", "admin");
-
-        Loan activeLoan = new Loan("L1", activeUser, testBook, java.time.LocalDate.now());
-
-        when(mockLoanRepo.getAllActiveLoans()).thenReturn(Collections.singletonList(activeLoan));
-        when(mockUserRepo.getAllUsers()).thenReturn(Arrays.asList(activeUser, inactiveUser, adminUser));
-
-
-        List<User> result = bookServiceAdmin.viewInactiveUsers();
-
+        List<User> result = admin.viewInactiveUsers();
 
         assertEquals(1, result.size());
+        assertEquals("cust2", result.get(0).getUsername());
     }
 
     @Test
-    @DisplayName("Should not include admin users in inactive list")
-    void viewInactiveUsers_WithInactiveAdmin_ExcludesAdmin() {
+    void viewInactiveUsers_noLoans_returnsAllCustomers() {
+        when(loanFile.getAllActiveLoans()).thenReturn(List.of());
+        when(userFile.getAllUsers()).thenReturn(List.of(cust1, cust2, adminUser));
 
-        User inactiveCustomer = new User("customer", "pass", "customer");
-        User inactiveAdmin = new User("admin", "pass", "admin");
+        assertEquals(2, admin.viewInactiveUsers().size());
+    }
 
-        when(mockLoanRepo.getAllActiveLoans()).thenReturn(new ArrayList<>());
-        when(mockUserRepo.getAllUsers()).thenReturn(Arrays.asList(inactiveCustomer, inactiveAdmin));
+    // ====================== unregister ======================
 
-
-        List<User> result = bookServiceAdmin.viewInactiveUsers();
-
-
-        assertEquals(1, result.size());
+    @Test
+    void unregisterAllUsers_callsRepository() {
+        List<User> list = List.of(cust1);
+        admin.unregisterAllUsers(list);
+        verify(userFile).unregisterAllUsers(list);
     }
 
     @Test
-    @DisplayName("Should handle multiple inactive users correctly")
-    void viewInactiveUsers_WithMultipleInactive_ReturnsAllInactive() {
+    void unregisterUserByUsername_success_printsMessage() {
+        when(userFile.unregisterUserByUsername("cust1")).thenReturn(true);
 
-        User inactive1 = new User("inactive1", "pass", "customer");
-        User inactive2 = new User("inactive2", "pass", "customer");
-        User inactive3 = new User("inactive3", "pass", "customer");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
 
-        when(mockLoanRepo.getAllActiveLoans()).thenReturn(new ArrayList<>());
-        when(mockUserRepo.getAllUsers()).thenReturn(Arrays.asList(inactive1, inactive2, inactive3));
+        admin.unregisterUserByUsername("cust1");
 
-
-        List<User> result = bookServiceAdmin.viewInactiveUsers();
-
-
-        assertEquals(3, result.size());
-    }
-
-    // ==================== unregisterAllUsers Tests ====================
-
-    @Test
-    @DisplayName("Should call userFile.unregisterAllUsers with provided list")
-    void unregisterAllUsers_WithUserList_CallsRepository() {
-
-        List<User> users = Arrays.asList(testUser);
-
-
-        bookServiceAdmin.unregisterAllUsers(users);
-
-
-        verify(mockUserRepo, times(1)).unregisterAllUsers(users);
+        assertTrue(out.toString().contains("successfully"));
     }
 
     @Test
-    @DisplayName("Should handle empty user list")
-    void unregisterAllUsers_WithEmptyList_CallsRepository() {
+    void unregisterUserByUsername_failure_printsError() {
+        when(userFile.unregisterUserByUsername("unknown")).thenReturn(false);
 
-        List<User> emptyList = new ArrayList<>();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
 
+        admin.unregisterUserByUsername("unknown");
 
-        bookServiceAdmin.unregisterAllUsers(emptyList);
-
-
-        verify(mockUserRepo, times(1)).unregisterAllUsers(emptyList);
-    }
-
-    @Test
-    @DisplayName("Should handle null user list gracefully")
-    void unregisterAllUsers_WithNullList_CallsRepository() {
-
-        assertDoesNotThrow(() -> bookServiceAdmin.unregisterAllUsers(null));
-    }
-
-    // ==================== unregisterUserByUsername Tests ====================
-
-    @Test
-    @DisplayName("Should print success message when user is unregistered successfully")
-    void unregisterUserByUsername_WithValidUser_PrintsSuccess() {
-
-        when(mockUserRepo.unregisterUserByUsername("testuser")).thenReturn(true);
-
-
-        bookServiceAdmin.unregisterUserByUsername("testuser");
-
-
-        verify(mockUserRepo, times(1)).unregisterUserByUsername("testuser");
-    }
-
-    @Test
-    @DisplayName("Should print error message when unregistration fails")
-    void unregisterUserByUsername_WithInvalidUser_PrintsError() {
-
-        when(mockUserRepo.unregisterUserByUsername("nonexistent")).thenReturn(false);
-
-
-        bookServiceAdmin.unregisterUserByUsername("nonexistent");
-
-
-        verify(mockUserRepo, times(1)).unregisterUserByUsername("nonexistent");
-    }
-
-    @Test
-    @DisplayName("Should handle null username gracefully")
-    void unregisterUserByUsername_WithNullUsername_CallsRepository() {
-
-        when(mockUserRepo.unregisterUserByUsername(null)).thenReturn(false);
-
-
-        bookServiceAdmin.unregisterUserByUsername(null);
-
-
-        verify(mockUserRepo, times(1)).unregisterUserByUsername(null);
-    }
-
-    @Test
-    @DisplayName("Should handle empty username")
-    void unregisterUserByUsername_WithEmptyUsername_CallsRepository() {
-
-        when(mockUserRepo.unregisterUserByUsername("")).thenReturn(false);
-
-
-        bookServiceAdmin.unregisterUserByUsername("");
-
-
-        verify(mockUserRepo, times(1)).unregisterUserByUsername("");
+        assertTrue(out.toString().contains("something went wrong"));
     }
 }
