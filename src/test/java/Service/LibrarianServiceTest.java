@@ -119,4 +119,11 @@ public class LibrarianServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size()); // Only the overdue loan should be returned
     }
+    @Test
+    void testCalculateTotalFineDue_NoOverdueLoans() {
+        when(mockLoanRepo.getOverdueLoans(LocalDate.now())).thenReturn(List.of());
+        int result = librarianService.calculateTotalFineDue(LocalDate.now());
+        assertEquals(0, result, "The total fine should be 0 when there are no overdue loans.");
+        verify(mockLoanRepo, times(1)).getOverdueLoans(LocalDate.now());
+    }
 }
