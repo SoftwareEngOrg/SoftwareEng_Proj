@@ -102,12 +102,11 @@ class FileLoanRepositoryTest {
         assertTrue(result);
         assertEquals(returnDate, loan.getReturnDate());
         assertTrue(book.isAvailable());
-<<<<<<< Updated upstream
         assertEquals(0, repo.getAllActiveLoans().size()); // no longer active
         assertEquals(1, countLines(tempLoansFile));       // still in file (with return date)
-=======
+
         assertEquals(0, repo.getAllActiveLoans().size());
->>>>>>> Stashed changes
+
         assertTrue(readFirstLine(tempLoansFile).endsWith(returnDate.toString()));
     }
 
