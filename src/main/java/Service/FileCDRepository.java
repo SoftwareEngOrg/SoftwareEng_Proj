@@ -20,6 +20,10 @@ public class FileCDRepository {
         return instance;
     }
 
+    public static void reset() {
+        instance = null;
+    }
+
 
     private String getFilePath() {
         return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
@@ -60,7 +64,7 @@ public class FileCDRepository {
         return cds;
     }
 
-    public void updateAll(List<CD> cds) {
+    public void updateAll(List <CD> cds) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(getFilePath()))) {
             for (CD cd : cds) {
                 writer.write(cd.getTitle() + ";" + cd.getAuthor() + ";" + cd.getIsbn() + ";" + cd.isAvailable());
@@ -78,7 +82,7 @@ public class FileCDRepository {
                 .orElse(null);
     }
 
-    public void updateCDAvailability(String isbn) {
+    /*public void updateCDAvailability(String isbn) {
         CD cd = findByIsbn(isbn);
         if (cd != null) {
 
@@ -96,5 +100,72 @@ public class FileCDRepository {
                 System.out.println("CD is now available - notifying waitlist...");
             }
         }
+    }*/
+
+
+
+
+    public void updateCDAvailability(String isbn) {
+        CD cd = findByIsbn(isbn);
+        if (cd != null) {
+
+            int availableCopies = FileMediaCopyRepository.getInstance()
+                    .getAvailableCopiesCount(isbn);
+
+            boolean nowAvailable = (availableCopies > 0);
+            cd.setAvailable(nowAvailable);
+
+            // Fix: update the single CD inside the full list, then write
+            List<CD> cds = findAllCDs();
+            for (int i = 0; i < cds.size(); i++) {
+                if (cds.get(i).getIsbn().equalsIgnoreCase(isbn)) {
+                    cds.set(i, cd);
+                    break;
+                }
+            }
+
+            updateAll(cds);  // NOW correct
+        }
     }
+
+
+
+
+
+  /*  public void updateCD(CD cd) {
+        List<CD> cds = findAllCDs();
+        boolean replaced = false;
+        for (int i = 0; i < cds.size(); i++) {
+            if (cds.get(i).getIsbn().equalsIgnoreCase(cd.getIsbn())) {
+                cds.set(i, cd);
+                replaced = true;
+                break;
+            }
+        }
+        if (!replaced) {
+            cds.add(cd);
+        }
+        updateAll(cds);
+    }*/
+
+
+    // inside FileCDRepository class
+    public void updateCD(CD cd) {
+        if (cd == null) return;
+        List<CD> cds = findAllCDs();
+        boolean replaced = false;
+        for (int i = 0; i < cds.size(); i++) {
+            if (cds.get(i).getIsbn() != null && cds.get(i).getIsbn().equalsIgnoreCase(cd.getIsbn())) {
+                cds.set(i, cd);
+                replaced = true;
+                break;
+            }
+        }
+        if (!replaced) {
+            cds.add(cd);
+        }
+        updateAll(cds); // reuse existing bulk writer
+    }
+
+
 }

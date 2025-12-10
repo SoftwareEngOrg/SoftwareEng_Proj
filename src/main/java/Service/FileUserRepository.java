@@ -10,7 +10,30 @@ import java.util.stream.Collectors;
 
 public class FileUserRepository {
 
-    public static String repoPath = "users.txt";
+    private static FileUserRepository instance;
+    private static final String FILE_PATH = "users.txt";
+    public static String repoPath = FILE_PATH;
+
+    private String getFilePath() {
+        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
+    }
+
+    public static void setRepoPath (String newPath) {
+        repoPath = newPath;
+        instance = null;
+    }
+
+    public static synchronized FileUserRepository getInstance() {
+        if (instance == null) {
+            instance = new FileUserRepository();
+        }
+        return instance;
+    }
+
+    public static void reset() {
+        instance = null;
+    }
+
 
     public User findUser(String username, String password)
     {

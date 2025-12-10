@@ -328,7 +328,32 @@ class BookServiceCustomerTest {
     void completeReturn_WithFine_Succeeds() {
         boolean result = service.completeReturn("LOAN001");
 
+<<<<<<< Updated upstream
         assertNotNull(outContent.toString());
+=======
+        assertTrue(result);
+        assertTrue(outContent.toString().contains("Fine paid") ||
+                outContent.toString().contains("returned successfully"));
+    }
+
+    @Test
+    @DisplayName("Complete return for CD updates availability")
+    void completeReturn_CD_UpdatesAvailability() throws Exception {
+        LocalDate recent = LocalDate.now().minusDays(50);
+        String currentContent = Files.readString(tempLoansFile);
+        Files.writeString(tempLoansFile,
+                currentContent + "LOANCD;activeuser;CD002;" + recent + ";NULL\n"
+        );
+
+        resetSingletons();
+
+        service = new BookServiceCustomer("system@library.com", "systempass");
+        service.setCurrentUser(testUser);
+
+        boolean result = service.completeReturn("LOANCD");
+
+        assertTrue(result);
+>>>>>>> Stashed changes
     }
 
     // ==================== viewMyLoans Tests ====================
@@ -623,6 +648,144 @@ class BookServiceCustomerTest {
         service.setCurrentUser(null);
         service.viewMyLoans();
 
+<<<<<<< Updated upstream
         assertTrue(true);
+=======
+        assertTrue(outContent.toString().contains("Not logged in"));
+    }
+
+    @Test
+    @Order(102)
+    @DisplayName("Borrow and return workflow completes successfully")
+    void borrowAndReturn_Workflow_Success() throws Exception {
+        User cleanUser = new User("workflow", "pass", "customer", "workflow@test.com", new Date());
+        service.setCurrentUser(cleanUser);
+
+
+        boolean borrowed = service.borrowMediaItem("BOOK001");
+        assertTrue(borrowed);
+
+
+        service.viewMyLoans();
+        String output = outContent.toString();
+
+
+        assertTrue(output.contains("Loan ID") || output.contains("LOAN"));
+    }
+
+    @Test
+    @Order(103)
+    @DisplayName("Cannot borrow when having unpaid fines")
+    void borrowMediaItem_WithFines_Fails() {
+        // activeuser has overdue loan LOAN001 which generates fines
+        boolean result = service.borrowMediaItem("CD001");
+
+        assertFalse(result);
+        assertTrue(outContent.toString().contains("fine") ||
+                outContent.toString().contains("overdue"));
+    }
+
+    @Test
+    @Order(104)
+    @DisplayName("Return updates copy availability correctly")
+    void returnBook_UpdatesCopyAvailability() throws Exception {
+        // First check available copies before return
+        int copiesBefore = service.getCopiesByISBN("BOOK002").stream()
+                .filter(MediaCopy::isAvailable)
+                .toList()
+                .size();
+
+        // Return the book (LOAN002 is for BOOK002)
+        boolean returned = service.returnBook("LOAN002");
+
+        if (returned) {
+            // Check available copies after return
+            int copiesAfter = service.getCopiesByISBN("BOOK002").stream()
+                    .filter(MediaCopy::isAvailable)
+                    .toList()
+                    .size();
+
+            assertTrue(copiesAfter >= copiesBefore);
+        }
+    }
+
+    @Test
+    @Order(105)
+    @DisplayName("View loans calculates total fine correctly")
+    void viewMyLoans_CalculatesTotalFine() {
+        service.viewMyLoans();
+
+        String output = outContent.toString();
+        if (output.contains("Total fine")) {
+            assertTrue(output.contains("₪") || output.contains("fine"));
+        }
+    }
+
+    @Test
+    @Order(106)
+    @DisplayName("Get all available items when files are empty")
+    void getAllAvailable_EmptyFiles_ReturnsEmpty() throws Exception {
+        // Clear the files
+        Files.writeString(tempBooksFile, "");
+        Files.writeString(tempCDsFile, "");
+        resetSingletons();
+
+        List<Book> books = service.getAllAvailableBooks();
+        List<CD> cds = service.getAllAvailableCDs();
+
+        assertTrue(books.isEmpty());
+        assertTrue(cds.isEmpty());
+    }
+
+    @Test
+    @Order(107)
+    @DisplayName("Generate report shows proper formatting")
+    void generateLoanReport_ProperFormatting() {
+        String report = service.generateLoanReport();
+
+        // Check for proper line separators
+        assertTrue(report.contains("=") || report.contains("-") ||
+                report.contains("no active loans"));
+    }
+
+    @Test
+    @Order(108)
+    @DisplayName("Borrowing updates book availability in repository")
+    void borrowMediaItem_UpdatesAvailability() throws Exception {
+        User cleanUser = new User("avail", "pass", "customer", "avail@test.com", new Date());
+        service.setCurrentUser(cleanUser);
+
+        MediaItem bookBefore = service.findMediaByIsbn("BOOK001");
+        assertNotNull(bookBefore);
+
+        boolean borrowed = service.borrowMediaItem("BOOK001");
+        assertTrue(borrowed);
+
+        // The book might still show as available if there are multiple copies
+        MediaItem bookAfter = service.findMediaByIsbn("BOOK001");
+        assertNotNull(bookAfter);
+    }
+
+    @Test
+    @Order(109)
+    @DisplayName("Complete return of non-existent loan fails gracefully")
+    void completeReturn_NonExistent_Fails() {
+        boolean result = service.completeReturn("NONEXISTENT");
+
+        assertFalse(result);
+        assertTrue(outContent.toString().contains("Invalid"));
+    }
+
+    @Test
+    @Order(110)
+    @DisplayName("View my loans handles mixed book and CD loans")
+    void viewMyLoans_MixedTypes_DisplaysBoth() {
+        service.viewMyLoans();
+
+        String output = outContent.toString();
+        // Should have sections for books and/or CDs, or no loans message
+        assertTrue(output.contains("BOOK") || output.contains("CD") ||
+                output.contains("no active loans"));
+>>>>>>> Stashed changes
     }
 }

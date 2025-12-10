@@ -13,8 +13,13 @@ public class FileMediaCopyRepository {
     private List<MediaCopy> copies = new ArrayList<>();
 
 
-    private FileMediaCopyRepository() {
-        loadFromFile();
+    private String getFilePath() {
+        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
+    }
+
+    public static void setRepoPath (String newPath) {
+        repoPath = newPath;
+        instance = null;
     }
 
     public static synchronized FileMediaCopyRepository getInstance() {
@@ -27,8 +32,13 @@ public class FileMediaCopyRepository {
     }
 
 
-    private String getFilePath() {
-        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
+    public static void reset() {
+        instance = null;
+    }
+
+
+    private FileMediaCopyRepository() {
+        loadFromFile();
     }
 
     private String generateCopyId(String isbn, int index) {
@@ -86,7 +96,7 @@ public class FileMediaCopyRepository {
         return count;
     }
 
-    private void loadFromFile() {
+    void loadFromFile() {
         copies.clear();
 
         File file = new File(getFilePath());
