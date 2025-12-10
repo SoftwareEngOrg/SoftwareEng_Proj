@@ -1,4 +1,3 @@
-// src/test/java/Service/BookSearchTest.java
 
 package Service;
 
@@ -34,12 +33,19 @@ class BookSearchTest {
             """;
 
         Files.writeString(tempBookFile, testData);
+
+
+        FileBookRepository.reset();
+
+
         bookService = new BookService();
     }
 
     @AfterAll
     void cleanup() throws IOException {
         Files.deleteIfExists(tempBookFile);
+
+        FileBookRepository.reset();
     }
 
     @Test
@@ -48,10 +54,10 @@ class BookSearchTest {
         List<Book> results = bookService.searchByTitle("clean");
 
         assertEquals(1, results.size());
-        assertEquals("Clean Code", results.get(0).getTitle());
+        assertEquals("Clean Code", results.getFirst().getTitle());
 
         results = bookService.searchByTitle("JAVA");
-        assertEquals(2, results.size()); // Java Concurrency + Effective Java
+        assertEquals(2, results.size());
     }
 
     @Test
@@ -66,7 +72,7 @@ class BookSearchTest {
         List<Book> results = bookService.searchByAuthor("martin");
 
         assertEquals(1, results.size());
-        assertEquals("Robert Martin", results.get(0).getAuthor());
+        assertEquals("Robert Martin", results.getFirst().getAuthor());
 
         results = bookService.searchByAuthor("gamma");
         assertEquals(1, results.size());
@@ -118,7 +124,7 @@ class BookSearchTest {
     void bookSearchContext_executesStrategy() {
         BookSearchContext context = new BookSearchContext();
 
-        List<Book> allBooks =  FileBookRepository.getInstance().findAllBooks();
+        List<Book> allBooks = FileBookRepository.getInstance().findAllBooks();
 
         context.setStrategy(new SearchByTitleStrategy());
         assertFalse(context.executeSearch(allBooks, "clean").isEmpty());

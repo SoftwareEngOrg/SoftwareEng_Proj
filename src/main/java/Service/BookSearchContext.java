@@ -12,6 +12,7 @@ public class BookSearchContext {
     }
 
     public List<Book> executeSearch(List<Book> books, String query) {
+
         return strategy.search(books, query);
     }
 }

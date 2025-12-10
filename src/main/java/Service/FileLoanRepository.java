@@ -1,9 +1,6 @@
 package Service;
 
-import Domain.CD;
-import Domain.Loan;
-import Domain.MediaItem;
-import Domain.User;
+import Domain.*;
 
 import java.io.*;
 import java.time.LocalDate;
@@ -12,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class FileLoanRepository {
+    static FileLoanRepository instance;
     public static  String FILE_PATH = "loans.txt";
     public static String repoPath = FILE_PATH;
     private final List<Loan> loans = new ArrayList<>();
@@ -22,51 +20,81 @@ public class FileLoanRepository {
         return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
     }
 
+    public static void setRepoPath (String newPath) {
+        repoPath = newPath;
+        instance = null;
+    }
+
+
+
+    public static synchronized FileLoanRepository getInstance() {
+        if (instance == null) {
+            instance = new FileLoanRepository();
+        }
+        return instance;
+    }
+
+    public static void reset() {
+        instance = null;
+    }
+
+
+
     public FileLoanRepository() {
         this.bookRepository = FileBookRepository.getInstance();
         this.cdRepository = FileCDRepository.getInstance();
         loadLoans();
     }
 
-    public Loan borrowItem(User user, MediaItem item) {
 
 
-        String loanId = UUID.randomUUID().toString().substring(0, 8);
-        LocalDate borrowDate = LocalDate.now();
-        LocalDate dueDate = borrowDate.plusDays(item.getBorrowingPeriodDays());
+    public synchronized Loan borrowItem(User user, MediaItem item) {
+        if (user == null) throw new IllegalArgumentException("user is null");
+        if (item == null) throw new IllegalArgumentException("item is null");
+        if (!item.isAvailable()) throw new IllegalStateException("Item is not available");
 
-        Loan loan = new Loan(loanId, user, item, borrowDate);
 
-        loans.add(loan);
+        item.setAvailable(false);
+
+
+        if (item instanceof Book) {
+            FileBookRepository.getInstance().updateBooks((Book) item);
+        }
+
+        else if (item instanceof CD) {
+            FileCDRepository.getInstance().updateCD((CD) item);
+        }
+
+
+        Loan loan = new Loan(UUID.randomUUID().toString(), user, item, LocalDate.now());
+        this.loans.add(loan);
         saveToFile();
-
         return loan;
     }
 
-    public boolean returnItem(String loanId, LocalDate returnDate) {
-        for (Loan loan : loans) {
-            if (loan.getLoanId().equals(loanId) && loan.getReturnDate() == null) {
-                loan.returnItem(returnDate != null ? returnDate : LocalDate.now());
 
-                MediaItem item = loan.getMediaItem();
-                item.setAvailable(true);
-                if (item instanceof Domain.Book) {
-                    bookRepository.updateBooks(item);
-                } else if (item instanceof CD) {
-                    List<CD> allCDs = cdRepository.findAllCDs();
-                    for(CD cd:allCDs)
-                    {
-                        if(cd.getIsbn().equals(((CD) item).getIsbn()))
-                            cd.setAvailable(true);
-                    }
-                    cdRepository.updateAll(allCDs);
-                }
-                saveToFile();
-                return true;
-            }
+    public synchronized boolean returnItem(String loanId, LocalDate returnDate) {
+        Loan loan = findLoanById(loanId);
+        if (loan == null) return false;
+        if (loan.getReturnDate() != null) return false;
+
+        loan.returnItem(returnDate != null ? returnDate : LocalDate.now());
+
+        MediaItem item = loan.getMediaItem();
+
+        item.setAvailable(true);
+        if (item instanceof Book) {
+            FileBookRepository.getInstance().updateBooks((Book) item);
+        } else if (item instanceof CD) {
+            FileCDRepository.getInstance().updateCD((CD) item);
         }
-        return false;
+
+        saveToFile();
+        return true;
     }
+
+
+
 
     public List<Loan> getActiveLoansForUser(String username)
     {
@@ -136,7 +164,7 @@ public class FileLoanRepository {
                 User user = findUserByUsername(username);
                 MediaItem item = findMediaItemById(itemId);
 
-                if (user != null && item != null) {
+                if (item != null) {
                     Loan loan = new Loan(loanId, user, item, borrowDate);
                     if (returnDate != null) {
                         loan.returnItem(returnDate);

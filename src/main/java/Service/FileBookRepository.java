@@ -22,12 +22,24 @@ public class FileBookRepository {
         return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
     }
 
+    public static void setRepoPath(String newPath) {
+        repoPath = newPath;
+        instance = null;
+        cachedBooks.clear();
+    }
+
     public static synchronized FileBookRepository getInstance() {
         if (instance == null) {
             instance = new FileBookRepository();
         }
         return instance;
     }
+
+    public static void reset() {
+        instance = null;
+        cachedBooks.clear();
+    }
+
 
     /*public static void saveBook(Book book, int numberOfCopies) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath, true))) {

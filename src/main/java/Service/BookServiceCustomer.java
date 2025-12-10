@@ -164,6 +164,7 @@ public class BookServiceCustomer extends BookService{
     }
 
     public boolean completeReturn(String loanId) {
+
         LocalDate today = LocalDate.now();
         Loan loan = loanRepository.findLoanById(loanId);
 
