@@ -12,16 +12,22 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Scanner;
 
-
+/**
+ * User interface for customer menu, providing options for browsing, borrowing, and managing loans.
+ */
 public class CustomerMenuUI {
     private final BookServiceCustomer bookService = new BookServiceCustomer();
-    Doenev di = new Doenev();
-
+    private final Doenev di = new Doenev();
     private final Scanner scanner = new Scanner(System.in);
 
+    /**
+     * Displays the customer menu and handles user input.
+     *
+     * @param loggedInUser the user currently logged in
+     */
     public void show(User loggedInUser) {
         bookService.setCurrentUser(loggedInUser);
-        bookService.setEmailConfig(di.getUsername() , di.getPassword());
+        bookService.setEmailConfig(di.getUsername(), di.getPassword());
 
         System.out.println("\n====== Welcome " + loggedInUser.getUsername() + " ======\n");
 
@@ -32,9 +38,9 @@ public class CustomerMenuUI {
             System.out.println("3. Search Book");
             System.out.println("4. Borrow Book");
             System.out.println("5. Borrow CD");
-            System.out.println("6. return Item/pay fine");
+            System.out.println("6. Return Item/Pay Fine");
             System.out.println("7. View My Loans & Fines");
-            System.out.println("8. overdue report (Save to File)");
+            System.out.println("8. Overdue Report (Save to File)");
             System.out.println("9. Logout");
             System.out.println("===========================");
 
@@ -45,7 +51,7 @@ public class CustomerMenuUI {
                 case 1 -> browseBooks();
                 case 2 -> browseCDs();
                 case 3 -> new SearchBookUI().show(bookService);
-                case 4,5 -> borrowBook();
+                case 4, 5 -> borrowBook();
                 case 6 -> returnItem();
                 case 7 -> bookService.viewMyLoans();
                 case 8 -> printReport(loggedInUser);
@@ -58,6 +64,11 @@ public class CustomerMenuUI {
         }
     }
 
+    /**
+     * Generates and saves an overdue loan report for the logged-in user.
+     *
+     * @param loggedInUser the user whose report is to be generated
+     */
     private void printReport(User loggedInUser) {
         if (loggedInUser == null) {
             System.out.println("Error: Not logged in.");
@@ -68,7 +79,7 @@ public class CustomerMenuUI {
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
             writer.print(reportContent);
-            System.out.println("\n Report successfully saved to: " + filename);
+            System.out.println("\nReport successfully saved to: " + filename);
             System.out.println("\nReport Preview:");
             System.out.println(reportContent);
         } catch (IOException e) {
@@ -76,6 +87,9 @@ public class CustomerMenuUI {
         }
     }
 
+    /**
+     * Displays all available CDs and their copies.
+     */
     private void browseCDs() {
         var cds = bookService.getAllAvailableCDs();
         if (cds.isEmpty()) {
@@ -95,13 +109,16 @@ public class CustomerMenuUI {
             }
 
             System.out.println(cd.getTitle() + " | Artist: " + cd.getAuthor()
-                    + " | Isbn: " + cd.getIsbn()
+                    + " | ISBN: " + cd.getIsbn()
                     + " | Available Copies: " + availableCount);
         }
 
         System.out.println("-----------------------");
     }
 
+    /**
+     * Displays all available books and their copies.
+     */
     private void browseBooks() {
         var books = bookService.getAllAvailableBooks();
         if (books.isEmpty()) {
@@ -121,19 +138,25 @@ public class CustomerMenuUI {
             }
 
             System.out.println(book.getTitle() + " | Author: " + book.getAuthor()
-                    + " | Isbn: " + book.getIsbn()
+                    + " | ISBN: " + book.getIsbn()
                     + " | Available Copies: " + availableCount);
         }
 
         System.out.println("-----------------------");
     }
 
+    /**
+     * Allows the user to borrow a book based on ISBN.
+     */
     private void borrowBook() {
         System.out.print("Enter ISBN of the book to borrow: ");
         String isbn = scanner.nextLine().trim();
         bookService.borrowMediaItem(isbn);
     }
 
+    /**
+     * Allows the user to return an item and pay fines if necessary.
+     */
     private void returnItem() {
         System.out.print("Enter your Loan ID (shown when you borrowed): ");
         String loanId = scanner.nextLine().trim();
@@ -155,5 +178,4 @@ public class CustomerMenuUI {
             }
         }
     }
-
 }

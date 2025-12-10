@@ -2,8 +2,10 @@ package Domain;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Represents a user in the system with login credentials and other personal information.
+ */
 public class User {
 
     private String username;
@@ -12,21 +14,31 @@ public class User {
     private String email;
     private Date lastLoginDate;
 
-
-
-
-    public User(String username , String password , String role , String email,Date lastLoginDate)
-    {
+    /**
+     * Creates a new user with the specified details.
+     *
+     * @param username the username of the user
+     * @param password the password of the user
+     * @param role the role of the user (e.g., "admin", "member")
+     * @param email the email address of the user
+     * @param lastLoginDate the date the user last logged in
+     */
+    public User(String username, String password, String role, String email, Date lastLoginDate) {
         this.username = username;
         this.password = password;
         this.role = role;
         this.email = email;
         this.lastLoginDate = lastLoginDate;
-
     }
 
-    public User(String username , String password , String role)
-    {
+    /**
+     * Creates a new user with the specified details, without the last login date.
+     *
+     * @param username the username of the user
+     * @param password the password of the user
+     * @param role the role of the user (e.g., "admin", "member")
+     */
+    public User(String username, String password, String role) {
         this.username = username;
         this.password = password;
         this.role = role;
@@ -60,6 +72,12 @@ public class User {
         this.lastLoginDate = lastLoginDate;
     }
 
+    /**
+     * Returns the last login date formatted as "yyyy-MM-dd".
+     * If no login date is set, returns "Never logged in".
+     *
+     * @return formatted last login date
+     */
     public String getFormattedLastLoginDate() {
         if (lastLoginDate != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -69,11 +87,13 @@ public class User {
         }
     }
 
-
+    /**
+     * Returns a string representation of the user.
+     *
+     * @return user details as a string
+     */
     @Override
-    public String toString()
-    {
-        return (username + " | " + password + " | " + role + " | " + email+"| Last Login: " + getFormattedLastLoginDate());
+    public String toString() {
+        return username + " | " + role + " | " + email + " | Last Login: " + getFormattedLastLoginDate();
     }
-
 }

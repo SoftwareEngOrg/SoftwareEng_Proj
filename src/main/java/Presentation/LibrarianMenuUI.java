@@ -1,16 +1,21 @@
 package Presentation;
 
 import Domain.Loan;
-import Service.FileLoanRepository;
 import Service.InputValidator;
 import Service.LibrarianService;
 
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * UI for Librarian, providing options to view and manage loans (overdue, active), and search by username.
+ */
 public class LibrarianMenuUI {
     private final LibrarianService librarianService = new LibrarianService();
 
+    /**
+     * Displays the librarian menu and handles user input.
+     */
     public void show() {
         while (true) {
             System.out.println("\n====== Librarian Menu ======");
@@ -23,7 +28,6 @@ public class LibrarianMenuUI {
             System.out.print("Choose: ");
             int choice = InputValidator.getValidIntegerInput();
             LocalDate today = LocalDate.now();
-
 
             switch (choice) {
                 case 1 -> viewAllOverdue(today);
@@ -38,6 +42,11 @@ public class LibrarianMenuUI {
         }
     }
 
+    /**
+     * Displays all overdue loans and calculates fines.
+     *
+     * @param today the current date
+     */
     private void viewAllOverdue(LocalDate today) {
         var overdue = librarianService.getOverdueLoans(today);
 
@@ -64,6 +73,9 @@ public class LibrarianMenuUI {
         System.out.println("TOTAL FINES TO COLLECT: ₪" + totalFine);
     }
 
+    /**
+     * Displays all active loans.
+     */
     private void viewAllActiveLoans() {
         var loans = librarianService.getAllActiveLoans();
         if (loans.isEmpty()) {
@@ -78,6 +90,11 @@ public class LibrarianMenuUI {
         }
     }
 
+    /**
+     * Searches for overdue loans by a specific user.
+     *
+     * @param today the current date
+     */
     private void searchOverdueByUser(LocalDate today) {
         System.out.print("Enter username: ");
         String username = new java.util.Scanner(System.in).nextLine().trim();
