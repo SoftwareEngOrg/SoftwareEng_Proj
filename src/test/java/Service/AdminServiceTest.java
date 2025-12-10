@@ -50,4 +50,5 @@ class AdminServiceTest {
         adminService.logout();
         assertFalse(adminService.isLoggedIn());
     }
+
 }

@@ -5,17 +5,9 @@ import Service.BookServiceAdmin;
 
 import java.util.Scanner;
 
-/**
- * User interface for adding a new CD to the system.
- */
 public class AddCDUI {
     private Scanner cin = new Scanner(System.in);
 
-    /**
-     * Displays the UI for adding a CD and handles user input.
-     *
-     * @param service the BookServiceAdmin instance to add the CD
-     */
     public void show(BookServiceAdmin service) {
         System.out.println("\n====== Add CD ======");
 
@@ -42,7 +34,7 @@ public class AddCDUI {
 
         CD cd = new CD(title, author, isbn);
         String result = service.addCD(cd, numberOfCopies)
-                ? "CD added with " + numberOfCopies + " copies!"
+                ? "Book added with " + numberOfCopies + " copies!"
                 : "A book or CD with this ISBN already exists!";
         System.out.println(result);
 

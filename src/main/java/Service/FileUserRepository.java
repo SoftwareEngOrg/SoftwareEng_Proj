@@ -7,25 +7,33 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-/**
- * The FileUserRepository class manages user data, including authentication and user account operations.
- * It reads and writes user data from/to a file, handles adding new users, checking for existing users,
- * updating user details (like last login date), and unregistering users.
- */
+
 public class FileUserRepository {
 
+    private static FileUserRepository instance;
+    private static final String FILE_PATH = "users.txt";
+    public static String repoPath = FILE_PATH;
 
-    // Path to the user data file
-    public static String repoPath = "users.txt";
+    private String getFilePath() {
+        return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
+    }
 
-    /**
-     * Finds a user by their username and password. If the credentials are correct,
-     * it returns the corresponding User object, otherwise returns null.
-     *
-     * @param username the username of the user
-     * @param password the password of the user
-     * @return the User object if credentials are correct, or null if not
-     */
+    public static void setRepoPath (String newPath) {
+        repoPath = newPath;
+        instance = null;
+    }
+
+    public static synchronized FileUserRepository getInstance() {
+        if (instance == null) {
+            instance = new FileUserRepository();
+        }
+        return instance;
+    }
+
+    public static void reset() {
+        instance = null;
+    }
+
 
     public User findUser(String username, String password)
     {
@@ -53,16 +61,7 @@ public class FileUserRepository {
 
         return null;
     }
-    /**
-     * Adds a new user to the user repository. If the username already exists, the user is not added.
-     * The new user's role is set to "customer" by default.
-     *
-     * @param username the username of the new user
-     * @param password the password of the new user
-     * @param email the email of the new user
-     * @param current the current date (used for the last login date)
-     * @return true if the user was successfully added, false if the username already exists
-     */
+
     public boolean addUser(String username, String password, String email,Date current) {
 
         if (isUsernameExists(username)) {
@@ -85,12 +84,7 @@ public class FileUserRepository {
             return false;
         }
     }
-    /**
-     * Checks if a given username already exists in the repository.
-     *
-     * @param username the username to check
-     * @return true if the username exists, false otherwise
-     */
+
     public boolean isUsernameExists(String username) {
         try (BufferedReader br = new BufferedReader(new FileReader(repoPath))) {
             String line;
@@ -105,13 +99,7 @@ public class FileUserRepository {
         }
         return false;
     }
-    /**
-     * Updates the last login date of a user in the repository.
-     * This method finds the user by their username and password and updates their last login date
-     * to the current date.
-     *
-     * @param foundUser the user whose last login date will be updated
-     */
+
     public void updateDate(User foundUser) {
         StringBuilder fileContent = new StringBuilder();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -134,13 +122,10 @@ public class FileUserRepository {
 
         } catch (IOException e) {
             System.out.println("Error processing the file.");
+            e.printStackTrace();
         }
     }
-    /**
-     * Retrieves all users from the repository.
-     *
-     * @return a list of all users in the repository
-     */
+
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -159,12 +144,7 @@ public class FileUserRepository {
         }
         return users;
     }
-    /**
-     * Unregisters a user by their username. If the user is found, they are removed from the repository.
-     *
-     * @param username the username of the user to unregister
-     * @return true if the user was unregistered, false if the user was not found
-     */
+
     public boolean unregisterUserByUsername(String username) {
         List<User> users = getAllUsers();
         boolean userFound = false;
@@ -189,6 +169,7 @@ public class FileUserRepository {
                 return true;
             } catch (IOException e) {
                 System.out.println("Error updating the users file.");
+                e.printStackTrace();
             }
         } else {
             System.out.println("User " + username + " not found.");
@@ -196,12 +177,7 @@ public class FileUserRepository {
 
         return false;
     }
-    /**
-     * Unregisters all users who are in the provided list of inactive users.
-     *
-     * @param inActiveUsers the list of users to unregister
-     * @return true if all inactive users were unregistered, false if an error occurred
-     */
+
     public boolean unregisterAllUsers(List<User> inActiveUsers) {
         List<User> allUsers = getAllUsers();
         StringBuilder fileContent = new StringBuilder();
@@ -228,15 +204,11 @@ public class FileUserRepository {
             return true;
         } catch (IOException e) {
             System.out.println("Error updating the users file.");
+            e.printStackTrace();
             return false;
         }
     }
-    /**
-     * Finds a user by their username.
-     *
-     * @param username the username of the user to find
-     * @return the User object if found, or null if not found
-     */
+
     public User findUserByUsername(String username) {
         List<User> allUsers = getAllUsers();
 

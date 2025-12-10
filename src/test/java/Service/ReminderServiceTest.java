@@ -1,237 +1,203 @@
+// java
 package Service;
 
+import Domain.Book;
+import Domain.Loan;
 import Domain.User;
 import org.junit.jupiter.api.*;
+import org.mockito.ArgumentCaptor;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.nio.file.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.Mockito.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ReminderServiceTest {
-
-    private Path tempLoansFile;
-    private Path tempUsersFile;
-    private String originalLoansPath;
-    private String originalUsersPath;
+class ReminderServiceUnitTest {
 
     private ByteArrayOutputStream outContent;
     private PrintStream originalOut;
 
-    @BeforeAll
-    void beforeAll() throws Exception {
-        originalLoansPath = FileLoanRepository.repoPath;
-        originalUsersPath = FileUserRepository.repoPath;
-
-        tempLoansFile = Files.createTempFile("loans_reminder_test_", ".txt");
-        tempUsersFile = Files.createTempFile("users_reminder_test_", ".txt");
-
-        FileLoanRepository.repoPath = tempLoansFile.toString();
-        FileUserRepository.repoPath = tempUsersFile.toString();
-    }
-
     @BeforeEach
-    void setup() throws Exception {
-        // ensure clean singletons before preparing files
-        resetSingletons();
-
-        LocalDate past = LocalDate.now().minusDays(50);
-        LocalDate recent = LocalDate.now().minusDays(5);
-
-        // base loans file (two loans for same user; one overdue, one recent)
-        String loans =
-                "LOAN_OLD;activeuser;BOOK001;" + past + ";NULL\n" +
-                        "LOAN_RECENT;activeuser;BOOK002;" + recent + ";NULL\n";
-        Files.writeString(tempLoansFile, loans, StandardOpenOption.TRUNCATE_EXISTING);
-
-        // users: one with email, one without
-        String users =
-                "activeuser;pw;customer;user@example.com;2025-12-01\n" +
-                        "noemail;pw;customer;;2025-12-01\n";
-        Files.writeString(tempUsersFile, users, StandardOpenOption.TRUNCATE_EXISTING);
-
-        // capture System.out
-        outContent = new ByteArrayOutputStream();
+    void setUpOutput() {
         originalOut = System.out;
+        outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
     }
 
     @AfterEach
-    void tearDown() {
+    void restoreOutput() {
         if (originalOut != null) System.setOut(originalOut);
     }
 
-    @AfterAll
-    void afterAll() throws Exception {
-        FileLoanRepository.repoPath = originalLoansPath;
-        FileUserRepository.repoPath = originalUsersPath;
 
-        Files.deleteIfExists(tempLoansFile);
-        Files.deleteIfExists(tempUsersFile);
+    private void setField(Object target, String name, Object value) throws Exception {
+        Field f = target.getClass().getDeclaredField(name);
+        f.setAccessible(true);
+        f.set(target, value);
+    }
+
+    private void callInit(ReminderService svc) throws Exception {
+        Method m = ReminderService.class.getDeclaredMethod("initializeOverdueData");
+        m.setAccessible(true);
+        m.invoke(svc);
     }
 
     @Test
-    void displayOverdueUsers_noOverdues_printsNone() throws Exception {
-        // write only recent loans (no overdue)
-        LocalDate recent = LocalDate.now().minusDays(1);
-        Files.writeString(tempLoansFile,
-                "L1;usera;BOOKX;" + recent + ";NULL\n", StandardOpenOption.TRUNCATE_EXISTING);
+    void sendReminders_sendsEmail_whenUserHasEmail() throws Exception {
+        // mocks
+        FileLoanRepository loanRepo = mock(FileLoanRepository.class);
+        FileUserRepository userRepo = mock(FileUserRepository.class);
+        EmailService emailService = mock(EmailService.class);
 
-        resetSingletons();
+        Loan loan = mock(Loan.class);
+        User user = mock(User.class);
+        Book media = mock(Book.class);
+
+        LocalDate today = LocalDate.now();
+
+        when(user.getUsername()).thenReturn("activeuser");
+        when(user.getEmail()).thenReturn("user@example.com");
+
+        when(media.getTitle()).thenReturn("Some Book");
+        when(media.getAuthor()).thenReturn("Author");
+        // mock due date on Loan (Book doesn't have getDueDate)
+        when(loan.getDueDate()).thenReturn(today.minusDays(10));
+
+        when(loan.getUser()).thenReturn(user);
+        when(loan.getMediaItem()).thenReturn(media);
+        when(loan.calculateFine(any())).thenReturn(50);
+        when(loan.getOverdueDays(any())).thenReturn(10);
+
+        when(loanRepo.getOverdueLoans(any())).thenReturn(Collections.singletonList(loan));
+        when(userRepo.findUserByUsername("activeuser")).thenReturn(user);
+
+        // construct service and inject mocks
         ReminderService svc = new ReminderService();
+        setField(svc, "loanRepository", loanRepo);
+        setField(svc, "userRepository", userRepo);
+        setField(svc, "emailService", emailService);
+
+        // rebuild internal overdue data with our mocks
+        callInit(svc);
+
+        // action
+        svc.sendReminders();
+
+        // verify email send called and output mentions reminder
+        verify(emailService, times(1)).sendEmailAsync(eq("user@example.com"), anyString(), contains("Some Book"));
+        String out = outContent.toString().toLowerCase();
+        assertTrue(out.contains("reminder sent") || out.contains("activeuser") || out.contains("user@example.com"));
+    }
+
+    @Test
+    void sendReminders_skipsUsersWithoutEmail_andLogs() throws Exception {
+        FileLoanRepository loanRepo = mock(FileLoanRepository.class);
+        FileUserRepository userRepo = mock(FileUserRepository.class);
+        EmailService emailService = mock(EmailService.class);
+
+        Loan loan = mock(Loan.class);
+        User user = mock(User.class);
+
+        when(user.getUsername()).thenReturn("noemail");
+        when(user.getEmail()).thenReturn("");
+        when(loan.getUser()).thenReturn(user);
+        when(loan.calculateFine(any())).thenReturn(0);
+        when(loan.getOverdueDays(any())).thenReturn(5);
+
+        when(loanRepo.getOverdueLoans(any())).thenReturn(Collections.singletonList(loan));
+        when(userRepo.findUserByUsername("noemail")).thenReturn(user);
+
+        ReminderService svc = new ReminderService();
+        setField(svc, "loanRepository", loanRepo);
+        setField(svc, "userRepository", userRepo);
+        setField(svc, "emailService", emailService);
+        callInit(svc);
+
+        svc.sendReminders();
+
+        verify(emailService, never()).sendEmailAsync(anyString(), anyString(), anyString());
+        String out = outContent.toString().toLowerCase();
+        assertTrue(out.contains("has no email") || out.contains("skipping") || out.contains("no email"));
+    }
+
+    @Test
+    void displayOverdueUsers_showsCorrectCountsAndFines() throws Exception {
+        FileLoanRepository loanRepo = mock(FileLoanRepository.class);
+        FileUserRepository userRepo = mock(FileUserRepository.class);
+
+        Loan l1 = mock(Loan.class);
+        Loan l2 = mock(Loan.class);
+        User u1 = mock(User.class);
+        Book m1 = mock(Book.class);
+
+        LocalDate today = LocalDate.now();
+
+        when(u1.getUsername()).thenReturn("userA");
+        when(l1.getUser()).thenReturn(u1);
+        when(l1.calculateFine(today)).thenReturn(20);
+        when(l1.getOverdueDays(today)).thenReturn(2);
+        when(l1.getMediaItem()).thenReturn(m1);
+        when(m1.getTitle()).thenReturn("B1");
+        when(m1.getAuthor()).thenReturn("A1");
+        // mock due date on Loan instead of Book
+        when(l1.getDueDate()).thenReturn(today.minusDays(3));
+
+        when(l2.getUser()).thenReturn(u1);
+        when(l2.calculateFine(today)).thenReturn(30);
+        when(l2.getOverdueDays(today)).thenReturn(3);
+        when(l2.getMediaItem()).thenReturn(m1);
+
+        when(loanRepo.getOverdueLoans(any())).thenReturn(List.of(l1, l2));
+        when(userRepo.findUserByUsername("userA")).thenReturn(u1);
+
+        ReminderService svc = new ReminderService();
+        setField(svc, "loanRepository", loanRepo);
+        setField(svc, "userRepository", userRepo);
+
+        // rebuild overdue data and exercise display
+        callInit(svc);
 
         int count = svc.displayOverdueUsers();
         String out = outContent.toString();
 
-        assertEquals(0, count);
-        assertTrue(out.contains("No users with overdue loans.") || out.contains("No users") || out.toLowerCase().contains("no overdue"),
-                "Expected 'No users' or 'no overdue' message, got: " + out);
-    }
-
-
-    @Test
-    void sendReminders_overdueLoan_shouldLogOrSendReminder() throws Exception {
-        // ensure there is at least one overdue for activeuser (prepared in @BeforeEach)
-        resetSingletons();
-        ReminderService svc = new ReminderService();
-
-        svc.sendReminders();
-
-        String out = outContent.toString().toLowerCase();
-        boolean evidence = out.contains("reminder sent") ||
-                out.contains("user@example.com") ||
-                out.contains("activeuser");
-        boolean noOverdue = out.contains("no overdue") || out.contains("no reminders") || out.contains("no overdue loans");
-        assertTrue(evidence || noOverdue, "Expected reminder activity or explicit no-overdue message, got: " + out);
+        assertEquals(1, count);
+        assertTrue(out.contains("userA") || out.contains("userA"));
+        assertTrue(out.contains("Total fine") || out.toLowerCase().contains("total fine"));
     }
 
     @Test
-    void skipUsersWithoutEmail_shouldLogMissingEmail() throws Exception {
-        // append an overdue loan for user 'noemail' (user exists but has empty email)
-        LocalDate past = LocalDate.now().minusDays(40);
-        String extra = "LOAN_NOEMAIL;noemail;BOOK003;" + past + ";NULL\n";
-        Files.writeString(tempLoansFile, Files.readString(tempLoansFile) + extra, StandardOpenOption.TRUNCATE_EXISTING);
+    void buildReminderEmail_containsLoanDetails() throws Exception {
+        // create a loan mock with values and call private buildReminderEmail to inspect content
+        Loan loan = mock(Loan.class);
+        User user = mock(User.class);
+        Book media = mock(Book.class);
 
-        // Must reset singletons so ReminderService reads updated file contents
-        resetSingletons();
+        when(user.getUsername()).thenReturn("buildUser");
+        when(media.getTitle()).thenReturn("TitleX");
+        when(media.getAuthor()).thenReturn("AuthX");
+        LocalDate due = LocalDate.now().minusDays(5);
+        // mock due date on Loan instead of Book
+        when(loan.getDueDate()).thenReturn(due);
+        when(loan.getMediaItem()).thenReturn(media);
+        when(loan.getOverdueDays(any())).thenReturn(5);
+        when(loan.calculateFine(any())).thenReturn(50);
+
         ReminderService svc = new ReminderService();
+        // call private buildReminderEmail(User, List<Loan>, int)
+        Method m = ReminderService.class.getDeclaredMethod("buildReminderEmail", User.class, List.class, int.class);
+        m.setAccessible(true);
+        String email = (String) m.invoke(svc, user, List.of(loan), 50);
 
-        svc.sendReminders();
-
-        String out = outContent.toString().toLowerCase();
-        boolean missingEmailLog = out.contains("has no email") || out.contains("skipping") || out.contains("no email");
-        boolean noOverdue = out.contains("no overdue") || out.contains("no reminders") || out.contains("no overdue loans");
-        assertTrue(missingEmailLog || noOverdue,
-                "Expected log about missing email or a no-overdue message; got: " + out);
-    }
-
-
-    @Test
-    void getters_returnConsistentValues() throws Exception {
-        // prepare one overdue for activeuser
-        LocalDate past = LocalDate.now().minusDays(30);
-        Files.writeString(tempLoansFile,
-                "G1;activeuser;BOOK001;" + past + ";NULL\n", StandardOpenOption.TRUNCATE_EXISTING);
-        Files.writeString(tempUsersFile,
-                "activeuser;pw;customer;user@example.com;2025-12-01\n", StandardOpenOption.TRUNCATE_EXISTING);
-
-        resetSingletons();
-        ReminderService svc = new ReminderService();
-
-        int count = svc.getOverdueUsersCount();
-        Set<String> names = svc.getOverdueUsernames();
-
-        // accept either consistent count+set or a situation where the service found no overdues but remains consistent
-        assertTrue(count == names.size() || (count == 0 && (names == null || names.isEmpty())),
-                "Inconsistent overdue counts/names: count=" + count + ", names=" + names);
-        if (count > 0) {
-            assertTrue(names.contains("activeuser"));
-        }
-    }
-
-    // --- helpers ---
-
-    private Method findBuildEmailMethod() {
-        for (Method m : ReminderService.class.getDeclaredMethods()) {
-            if (m.getName().equalsIgnoreCase("buildReminderEmail") || m.getName().toLowerCase().contains("build") && m.getName().toLowerCase().contains("email")) {
-                return m;
-            }
-        }
-        return null;
-    }
-
-    private Object buildLoanFallback(String id, String username, String mediaId, LocalDate date) {
-        try {
-            Class<?> loanClass = Class.forName("Domain.Loan");
-            // try several common constructor shapes
-            for (Constructor<?> c : loanClass.getDeclaredConstructors()) {
-                c.setAccessible(true);
-                Class<?>[] pts = c.getParameterTypes();
-                Object[] args = new Object[pts.length];
-                for (int i = 0; i < pts.length; i++) {
-                    Class<?> p = pts[i];
-                    if (p.equals(String.class)) {
-                        if (i == 0) args[i] = id;
-                        else if (i == 1) args[i] = username;
-                        else if (i == 2) args[i] = mediaId;
-                        else args[i] = "";
-                    } else if (p.equals(LocalDate.class)) {
-                        args[i] = date;
-                    } else {
-                        args[i] = null;
-                    }
-                }
-                try {
-                    return c.newInstance(args);
-                } catch (Exception ignored) {
-                }
-            }
-            // try no-arg and set fields via reflection
-            Object loan = loanClass.getDeclaredConstructor().newInstance();
-            trySetField(loan, "id", id);
-            trySetField(loan, "username", username);
-            trySetField(loan, "mediaId", mediaId);
-            trySetField(loan, "date", date);
-            return loan;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private void trySetField(Object target, String name, Object value) {
-        try {
-            Field f = target.getClass().getDeclaredField(name);
-            f.setAccessible(true);
-            f.set(target, value);
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void resetSingletons() {
-        resetSingleton(FileBookRepository.class, "instance");
-        resetSingleton(FileCDRepository.class, "instance");
-        resetSingleton(FileMediaCopyRepository.class, "instance");
-        resetSingleton(FileLoanRepository.class, "instance");
-        resetSingleton(FileUserRepository.class, "instance");
-    }
-
-    private void resetSingleton(Class<?> clazz, String fieldName) {
-        List<String> candidates = Arrays.asList(fieldName, "INSTANCE", "singleton", "instance$0", "INSTANCE$0");
-        for (String name : candidates) {
-            try {
-                Field f = clazz.getDeclaredField(name);
-                f.setAccessible(true);
-                f.set(null, null);
-                return;
-            } catch (NoSuchFieldException ignored) {
-            } catch (IllegalAccessException ignored) {
-            } catch (Exception ignored) {
-            }
-        }
+        assertTrue(email.contains("Dear buildUser"));
+        assertTrue(email.contains("TitleX"));
+        assertTrue(email.contains("AuthX"));
+        assertTrue(email.contains("TOTAL FINE") || email.toUpperCase().contains("TOTAL FINE"));
     }
 }
