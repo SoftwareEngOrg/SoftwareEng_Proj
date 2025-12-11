@@ -336,22 +336,20 @@ public class BookServiceCustomer extends BookService{
         LocalDate today = LocalDate.now();
         List<Loan> myLoans = loanRepository.getActiveLoansForUser(currentUser.getUsername());
 
-        report.append("=".repeat(50)).append("\n");
-        report.append("        LIBRARY LOAN REPORT\n");
-        report.append("=".repeat(50)).append("\n");
-        report.append("User: ").append(currentUser.getUsername()).append("\n");
-        report.append("Report Date: ").append(today).append("\n");
-        report.append("=".repeat(50)).append("\n\n");
+        report.append("=".repeat(50)).append("\n")
+                .append("        LIBRARY LOAN REPORT\n")
+                .append("=".repeat(50)).append("\n")
+                .append("User: ").append(currentUser.getUsername()).append("\n")
+                .append("Report Date: ").append(today).append("\n")
+                .append("=".repeat(50)).append("\n\n");
 
         if (myLoans.isEmpty()) {
             report.append("You have no active loans.\n");
             return report.toString();
         }
 
-
         List<Loan> bookLoans = new ArrayList<>();
         List<Loan> cdLoans = new ArrayList<>();
-
         for (Loan loan : myLoans) {
             if (loan.getMediaItem() instanceof Book) {
                 bookLoans.add(loan);
@@ -362,49 +360,39 @@ public class BookServiceCustomer extends BookService{
 
         int totalFine = 0;
 
-        // Display Book Loans
-        if (!bookLoans.isEmpty()) {
-            report.append("BOOK LOANS:\n");
-            report.append("-".repeat(50)).append("\n");
-            for (Loan loan : bookLoans) {
-                int fine = loan.calculateFine(today);
-                totalFine += fine;
-                String status = loan.isOverdue(today) ? " (OVERDUE)" : "";
-                report.append(String.format("• %s\n", loan.getMediaItem().getTitle()));
-                report.append(String.format("  Author: %s\n", loan.getMediaItem().getAuthor()));
-                report.append(String.format("  Due Date: %s%s\n", loan.getDueDate(), status));
-                report.append(String.format("  Loan ID: %s\n", loan.getLoanId()));
-                report.append(String.format("  Fine: ₪%d\n", fine));
-                report.append("\n");
-            }
-            report.append("-".repeat(50)).append("\n\n");
-        }
-
-
-        if (!cdLoans.isEmpty()) {
-            report.append("CD LOANS:\n");
-            report.append("-".repeat(50)).append("\n");
-            for (Loan loan : cdLoans) {
-                int fine = loan.calculateFine(today);
-                totalFine += fine;
-                String status = loan.isOverdue(today) ? " (OVERDUE)" : "";
-                report.append(String.format("• %s\n", loan.getMediaItem().getTitle()));
-                report.append(String.format("  Artist: %s\n", loan.getMediaItem().getAuthor()));
-                report.append(String.format("  Due Date: %s%s\n", loan.getDueDate(), status));
-                report.append(String.format("  Loan ID: %s\n", loan.getLoanId()));
-                report.append(String.format("  Fine: ₪%d\n", fine));
-                report.append("\n");
-            }
-            report.append("-".repeat(50)).append("\n\n");
-        }
+        // Process Loans (book and cd)
+        totalFine += processLoanType(report, bookLoans, today, "BOOK LOANS");
+        totalFine += processLoanType(report, cdLoans, today, "CD LOANS");
 
         if (totalFine > 0) {
-            report.append("=".repeat(50)).append("\n");
-            report.append(String.format("TOTAL FINE OWED: ₪%d\n", totalFine));
-            report.append("=".repeat(50)).append("\n");
+            report.append("=".repeat(50)).append("\n")
+                    .append(String.format("TOTAL FINE OWED: ₪%d\n", totalFine))
+                    .append("=".repeat(50)).append("\n");
         }
 
         return report.toString();
+    }
+
+    private int processLoanType(StringBuilder report, List<Loan> loans, LocalDate today, String loanType) {
+        int totalFine = 0;
+
+        if (!loans.isEmpty()) {
+            report.append(loanType).append(":\n")
+                    .append("-".repeat(50)).append("\n");
+            for (Loan loan : loans) {
+                int fine = loan.calculateFine(today);
+                totalFine += fine;
+                String status = loan.isOverdue(today) ? " (OVERDUE)" : "";
+                report.append(String.format("• %s\n", loan.getMediaItem().getTitle()))
+                        .append(String.format("  %s: %s\n", loanType.equals("BOOK LOANS") ? "Author" : "Artist", loan.getMediaItem().getAuthor()))
+                        .append(String.format("  Due Date: %s%s\n", loan.getDueDate(), status))
+                        .append(String.format("  Loan ID: %s\n", loan.getLoanId()))
+                        .append(String.format("  Fine: ₪%d\n", fine))
+                        .append("\n");
+            }
+            report.append("-".repeat(50)).append("\n\n");
+        }
+        return totalFine;
     }
 
    /* public List<MediaCopy> getCopiesByISBN(String isbn) {
