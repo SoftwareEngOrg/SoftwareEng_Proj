@@ -204,7 +204,7 @@ public class FileUserRepository {
             return true;
         } catch (IOException e) {
             System.out.println("Error updating the users file.");
-            
+
             return false;
         }
     }
