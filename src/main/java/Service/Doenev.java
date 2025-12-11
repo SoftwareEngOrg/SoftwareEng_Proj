@@ -1,7 +1,11 @@
 package Service;
 
 import io.github.cdimascio.dotenv.Dotenv;
-
+/**
+ * Doenev is a small utility class responsible for loading email credentials
+ * from a .env file using the Dotenv library. The loaded EMAIL_USERNAME and
+ * EMAIL_PASSWORD values are stored and accessed through getters.
+ */
 public class Doenev {
 
     private String username;

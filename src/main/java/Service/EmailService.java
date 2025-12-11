@@ -5,7 +5,12 @@ import jakarta.mail.*;
 import jakarta.mail.internet.*;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
-
+/**
+ * EmailService provides asynchronous and synchronous support for sending
+ * emails using SMTP. It is initialized with a username and password, which
+ * are used for authentication when sending messages through Gmail's SMTP
+ * servers.
+ */
 public class EmailService {
 
     private final String username;

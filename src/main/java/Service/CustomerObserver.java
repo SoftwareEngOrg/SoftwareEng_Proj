@@ -3,7 +3,14 @@ package Service;
 
 import Domain.MediaItem;
 import Domain.User;
-
+/**
+ * CustomerObserver listens for notifications when a media item (book or other)
+ * becomes available. When triggered, it checks the user's email, retrieves the
+ * media details, and sends an email notification using EmailService.
+ *
+ * This class is part of the Observer pattern where users subscribe to specific
+ * ISBNs/IDs and get notified automatically when the item becomes available.
+ */
 public class CustomerObserver implements BookObserver {
 
     private final User user;

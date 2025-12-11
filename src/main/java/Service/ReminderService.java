@@ -5,6 +5,21 @@ import Domain.User;
 
 import java.time.LocalDate;
 import java.util.*;
+/**
+ * ReminderService handles detection of overdue loans and sends reminder emails
+ * to users who have overdue items. It loads loan and user data from repositories,
+ * groups overdue loans per user, calculates fines, displays summaries,
+ * and sends reminder messages using the EmailService.
+ *
+ * Responsibilities:
+ * - Load overdue loans
+ * - Group loans by user
+ * - Calculate overdue fines
+ * - Display overdue users report
+ * - Send reminder emails
+ *
+ * This class initializes all required data on construction.
+ */
 public class ReminderService {
 
     private FileLoanRepository loanRepository;
