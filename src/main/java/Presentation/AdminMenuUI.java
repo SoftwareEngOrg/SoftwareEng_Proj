@@ -3,47 +3,60 @@ package Presentation;
 import Domain.User;
 import Service.*;
 
-
 import java.util.List;
 import java.util.Scanner;
 
 /**
- * User interface class that provides the administrator menu and related actions.
- * <p>
- * This menu allows an admin to add books or CDs, search for books,
- * manage inactive users, send reminders, and log out.
- * It communicates with multiple service-layer classes to perform the operations.
- * </p>
+ * Provides the administrator interface for managing the library system.
+ *
+ * <p>This UI allows administrators to:
+ * <ul>
+ *     <li>Add books and CDs</li>
+ *     <li>Search for books</li>
+ *     <li>View and unregister inactive users</li>
+ *     <li>Send reminder emails to users with overdue loans</li>
+ *     <li>Log out</li>
+ * </ul>
+ *
+ * <p>The class works as a presentation-layer component and communicates
+ * with several service-layer classes to perform operations.
+ *
+ * @since 1.0
+ * @see BookServiceAdmin
+ * @see AdminService
+ * @see ReminderService
  */
 public class AdminMenuUI {
 
     /** Scanner for reading user input from the console. */
     private Scanner cin = new Scanner(System.in);
 
-    /** Service used for book and CD operations. */
+    /** Service layer for managing books, CDs, and user administrative actions. */
     private BookServiceAdmin bookService = new BookServiceAdmin();
 
     /**
-     * Displays the administrator menu and handles user selections.
-     * Ensures that the user is logged in before allowing access.
+     * Displays the main administrator menu and executes the selected option.
      *
-     * @param adminService the service responsible for authentication and admin actions
+     * <p>The method first verifies that the administrator is logged in. If not,
+     * access is denied. The menu runs in a loop until the admin chooses to log out.
+     *
+     * @param adminService the service responsible for authentication and admin-specific actions
+     * @see AddBookUI
+     * @see AddCDUI
+     * @see SearchBookUI
      */
-    public void show(AdminService adminService)
-    {
-        if (!adminService.isLoggedIn())
-        {
+    public void show(AdminService adminService) {
+        if (!adminService.isLoggedIn()) {
             System.out.println("Access denied.");
             return;
         }
 
-        while (true)
-        {
+        while (true) {
             System.out.println("\n====== Admin Menu ======");
             System.out.println("1. Add Book");
             System.out.println("2. Add CD");
             System.out.println("3. Search Book");
-            System.out.println("4. inactive users");
+            System.out.println("4. Inactive Users");
             System.out.println("5. Reminder");
             System.out.println("6. Logout");
             System.out.println("=========================");
@@ -51,28 +64,17 @@ public class AdminMenuUI {
             System.out.print("Choose: ");
             int choice = InputValidator.getValidIntegerInput();
 
-            if (choice == 1)
-            {
+            if (choice == 1) {
                 new AddBookUI().show(bookService);
-            }
-            else if (choice == 2)
-            {
+            } else if (choice == 2) {
                 new AddCDUI().show(bookService);
-            }
-            else if (choice == 3)
-            {
+            } else if (choice == 3) {
                 new SearchBookUI().show(bookService);
-            }
-            else if (choice == 4)
-            {
+            } else if (choice == 4) {
                 viewInactiveUsersUI();
-            }
-            else if (choice == 5)
-            {
+            } else if (choice == 5) {
                 Reminder();
-            }
-            else if (choice == 6)
-            {
+            } else if (choice == 6) {
                 adminService.logout();
                 System.out.println("Logged out!");
                 break;
@@ -82,9 +84,12 @@ public class AdminMenuUI {
 
     /**
      * Displays users who have overdue loans and optionally sends reminder emails.
-     * <p>
-     * This method uses {@link ReminderService} to check overdue users and send notifications.
-     * </p>
+     *
+     * <p>If overdue users exist, the admin is prompted whether to send reminder emails.
+     * This operation uses {@link ReminderService}.
+     *
+     * @see ReminderService#displayOverdueUsers()
+     * @see ReminderService#sendReminders()
      */
     private void Reminder() {
         System.out.println("\n====== Reminder: Users with Overdue Loans ======");
@@ -109,18 +114,44 @@ public class AdminMenuUI {
     }
 
     /**
-     * Displays a list of inactive users and allows the admin to:
+     * Displays a list of inactive users and provides administrative options:
+     *
      * <ul>
-     *   <li>Unregister all inactive users</li>
-     *   <li>Unregister a specific inactive user by username</li>
-     *   <li>Return to the menu</li>
+     *     <li>Unregister all inactive users</li>
+     *     <li>Unregister one user by username</li>
+     *     <li>Return to the main admin menu</li>
      * </ul>
-     * <p>
-     * Uses {@link BookServiceAdmin} to manage user removal.
-     * </p>
+     *
+     * @see BookServiceAdmin#viewInactiveUsers()
+     * @see BookServiceAdmin#unregisterAllUsers(List)
+     * @see BookServiceAdmin#unregisterUserByUsername(String)
      */
     private void viewInactiveUsersUI() {
         List<User> inActiveUsers = bookService.viewInactiveUsers();
+        displayInactiveUsers(inActiveUsers);
+
+        while (true) {
+            int choice = getAdminMenuChoice();
+            if (choice == 1) {
+                unregisterAllUsers(inActiveUsers);
+                break;
+            } else if (choice == 2) {
+                unregisterUserByUsername(inActiveUsers);
+                break;
+            } else if (choice == 3) {
+                break;
+            } else {
+                System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    /**
+     * Displays the list of inactive users.
+     *
+     * @param inActiveUsers the list of inactive users to display
+     */
+    private void displayInactiveUsers(List<User> inActiveUsers) {
         if (inActiveUsers.isEmpty()) {
             System.out.println("No inactive users found.");
         } else {
@@ -130,40 +161,51 @@ public class AdminMenuUI {
             }
             System.out.println("=============================");
         }
+    }
 
-        while (true) {
-            System.out.println("\nChoose an option:");
-            System.out.println("1. Unregister all users");
-            System.out.println("2. Unregister a user by username");
-            System.out.println("3. Go back");
+    /**
+     * Displays the submenu for inactive user handling and returns the admin's choice.
+     *
+     * @return the selected option as an integer
+     */
+    private int getAdminMenuChoice() {
+        System.out.println("\nChoose an option:");
+        System.out.println("1. Unregister all users");
+        System.out.println("2. Unregister a user by username");
+        System.out.println("3. Go back");
+        System.out.print("Choose: ");
+        return InputValidator.getValidIntegerInput();
+    }
 
-            System.out.print("Choose: ");
-            int choice = InputValidator.getValidIntegerInput();
+    /**
+     * Unregisters all inactive users using the service layer.
+     *
+     * @param inActiveUsers the list of inactive users to unregister
+     */
+    private void unregisterAllUsers(List<User> inActiveUsers) {
+        bookService.unregisterAllUsers(inActiveUsers);
+    }
 
-            if (choice == 1) {
-                bookService.unregisterAllUsers(inActiveUsers);
+    /**
+     * Unregisters a specific user by username after verifying they are inactive.
+     *
+     * @param inActiveUsers the list of inactive users
+     */
+    private void unregisterUserByUsername(List<User> inActiveUsers) {
+        System.out.print("Enter username to unregister: ");
+        String username = cin.nextLine();
+        boolean userFound = false;
+
+        for (User user : inActiveUsers) {
+            if (user.getUsername().equals(username)) {
+                bookService.unregisterUserByUsername(username);
+                userFound = true;
                 break;
             }
-            else if (choice == 2) {
-                System.out.print("Enter username to unregister: ");
-                String username = cin.nextLine();
-                for (User user : inActiveUsers)
-                {
-                    if (user.getUsername().equals(username))
-                    {
-                        bookService.unregisterUserByUsername(username);
-                        break;
-                    }
-                }
-                System.out.print("this user you are trying to unregister is ACTIVE!!");
-                break;
-            }
-            else if (choice == 3) {
-                break;
-            }
-            else {
-                System.out.println("Invalid choice. Please try again.");
-            }
+        }
+
+        if (!userFound) {
+            System.out.println("This user is not inactive or doesn't exist.");
         }
     }
 }
