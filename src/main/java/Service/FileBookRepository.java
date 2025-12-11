@@ -1,20 +1,24 @@
 package Service;
-import Domain.Book ;
+
+import Domain.Book;
 import Domain.MediaCopy;
 import Domain.MediaItem;
 
 import java.io.*;
 import java.util.*;
 
+/**
+ * Repository class for managing Books stored in a file.
+ * Provides methods to save, update, query, and manage availability of books.
+ */
 public class FileBookRepository {
 
     static FileBookRepository instance;
     private static final String FILE_PATH = "books.txt";
-    public static  String repoPath = FILE_PATH;
+    public static String repoPath = FILE_PATH;
     private static List<Book> cachedBooks = new ArrayList<>();
 
-
-    private  FileBookRepository() {
+    private FileBookRepository() {
         loadBooksFromFile();
     }
 
@@ -22,12 +26,22 @@ public class FileBookRepository {
         return (repoPath != null && !repoPath.isEmpty()) ? repoPath : FILE_PATH;
     }
 
+    /**
+     * Sets a new file path for the repository.
+     *
+     * @param newPath the new repository path
+     */
     public static void setRepoPath(String newPath) {
         repoPath = newPath;
         instance = null;
         cachedBooks.clear();
     }
 
+    /**
+     * Returns the singleton instance of FileBookRepository.
+     *
+     * @return the repository instance
+     */
     public static synchronized FileBookRepository getInstance() {
         if (instance == null) {
             instance = new FileBookRepository();
@@ -35,24 +49,20 @@ public class FileBookRepository {
         return instance;
     }
 
+    /**
+     * Resets the singleton instance.
+     */
     public static void reset() {
         instance = null;
         cachedBooks.clear();
     }
 
-
-    /*public static void saveBook(Book book, int numberOfCopies) {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(repoPath, true))) {
-
-            pw.println(book.getTitle() + ";" + book.getAuthor() + ";" + book.getIsbn() + ";" + true);
-            cachedBooks.add(book);
-        } catch (Exception e) {
-            System.out.println("Error writing to books file: " + e.getMessage());
-        }
-
-        FileMediaCopyRepository.getInstance().addCopiesByBookIsbn(book.getIsbn(), numberOfCopies, true);
-    }*/
-
+    /**
+     * Saves a book to the file and adds its copies to the media copy repository.
+     *
+     * @param book the book to save
+     * @param numberOfCopies number of copies to add
+     */
     public static void saveBook(Book book, int numberOfCopies) {
         FileBookRepository instance = getInstance();
         try (PrintWriter pw = new PrintWriter(new FileWriter(instance.getFilePath(), true))) {
@@ -65,6 +75,7 @@ public class FileBookRepository {
         FileMediaCopyRepository.getInstance().addCopiesByBookIsbn(book.getIsbn(), numberOfCopies, true);
     }
 
+    /** Loads books from file into cache. */
     private void loadBooksFromFile() {
         cachedBooks.clear();
         try (BufferedReader br = new BufferedReader(new FileReader(getFilePath()))) {
@@ -82,10 +93,20 @@ public class FileBookRepository {
         }
     }
 
+    /**
+     * Returns a list of all books in the repository.
+     *
+     * @return list of books
+     */
     public List<Book> findAllBooks() {
         return new ArrayList<>(cachedBooks);
     }
 
+    /**
+     * Updates the information of a book.
+     *
+     * @param item the book or media item to update
+     */
     public void updateBooks(MediaItem item) {
         for (Book b : cachedBooks) {
             if (b.getIsbn().equals(item.getIsbnOrId())) {
@@ -97,6 +118,7 @@ public class FileBookRepository {
         saveAllBooksToFile();
     }
 
+    /** Saves all cached books to file. */
     private void saveAllBooksToFile() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(getFilePath()))) {
             for (Book b : cachedBooks) {
@@ -107,10 +129,17 @@ public class FileBookRepository {
         }
     }
 
+    /** Reloads books from file into cache. */
     public void reloadBooks() {
         loadBooksFromFile();
     }
 
+    /**
+     * Finds a book by ISBN.
+     *
+     * @param isbn the ISBN to search for
+     * @return the book if found, otherwise null
+     */
     public Book findByIsbn(String isbn) {
         return findAllBooks().stream()
                 .filter(book -> book.getIsbn().equalsIgnoreCase(isbn.trim()))
@@ -118,24 +147,24 @@ public class FileBookRepository {
                 .orElse(null);
     }
 
+    /**
+     * Updates the availability status of a book based on available copies.
+     *
+     * @param isbn the ISBN of the book
+     */
     public void updateBookAvailability(String isbn) {
         Book book = findByIsbn(isbn);
         if (book != null) {
-
-            int availableCopies = FileMediaCopyRepository.getInstance()
-                    .getAvailableCopiesCount(isbn);
-
+            int availableCopies = FileMediaCopyRepository.getInstance().getAvailableCopiesCount(isbn);
             boolean wasAvailable = book.isAvailable();
             boolean nowAvailable = (availableCopies > 0);
 
             book.setAvailable(nowAvailable);
             saveAllBooksToFile();
 
-
             if (!wasAvailable && nowAvailable) {
                 System.out.println("Book is now available - notifying waitlist...");
             }
         }
     }
-
 }
