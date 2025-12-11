@@ -225,10 +225,26 @@ public class BookServiceCustomer extends BookService{
             return;
         }
 
-
         List<Loan> bookLoans = new ArrayList<>();
         List<Loan> cdLoans = new ArrayList<>();
+        categorizeLoans(myLoans, bookLoans, cdLoans);
 
+        System.out.println("\n=== Your Active Loans ===");
+        int totalFine = 0;
+
+        totalFine += displayLoanType(bookLoans, today, "BOOK LOANS");
+
+
+        totalFine += displayLoanType(cdLoans, today, "CD LOANS");
+
+
+        if (totalFine > 0) {
+            System.out.println("\n Total fine owed: ₪" + totalFine);
+        }
+    }
+
+
+    private void categorizeLoans(List<Loan> myLoans, List<Loan> bookLoans, List<Loan> cdLoans) {
         for (Loan loan : myLoans) {
             if (loan.getMediaItem() instanceof Book) {
                 bookLoans.add(loan);
@@ -236,15 +252,15 @@ public class BookServiceCustomer extends BookService{
                 cdLoans.add(loan);
             }
         }
+    }
 
-        System.out.println("\n=== Your Active Loans ===");
+    private int displayLoanType(List<Loan> loans, LocalDate today, String loanType) {
         int totalFine = 0;
 
-
-        if (!bookLoans.isEmpty()) {
-            System.out.println("\n BOOK LOANS:");
+        if (!loans.isEmpty()) {
+            System.out.println("\n" + loanType + ":");
             System.out.println("--------------------------------------");
-            for (Loan loan : bookLoans) {
+            for (Loan loan : loans) {
                 int fine = loan.calculateFine(today);
                 totalFine += fine;
                 String status = loan.isOverdue(today) ? " (OVERDUE)" : "";
@@ -258,27 +274,7 @@ public class BookServiceCustomer extends BookService{
             System.out.println("--------------------------------------");
         }
 
-
-        if (!cdLoans.isEmpty()) {
-            System.out.println("\n CD LOANS:");
-            System.out.println("--------------------------------------");
-            for (Loan loan : cdLoans) {
-                int fine = loan.calculateFine(today);
-                totalFine += fine;
-                String status = loan.isOverdue(today) ? " (OVERDUE)" : "";
-                System.out.printf("• %s → Due: %s | Loan ID: %s%s | Fine: ₪%d\n",
-                        loan.getMediaItem().getTitle(),
-                        loan.getDueDate(),
-                        loan.getLoanId(),
-                        status,
-                        fine);
-            }
-            System.out.println("--------------------------------------");
-        }
-
-        if (totalFine > 0) {
-            System.out.println("\n Total fine owed: ₪" + totalFine);
-        }
+        return totalFine;
     }
 
     public List<Book> getAllAvailableBooks() {
