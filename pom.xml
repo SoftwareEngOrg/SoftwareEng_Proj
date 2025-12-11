@@ -15,6 +15,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.organization>softwareengorg</sonar.organization>
         <sonar.projectKey>SoftwareEngOrg_SoftwareEng_Proj</sonar.projectKey>
+        <sonar.coverage.exclusions>
+            **/Presentation/**,
+            **/Domain/**,
+            **/resources/**
+        </sonar.coverage.exclusions>
     </properties>
 
 
