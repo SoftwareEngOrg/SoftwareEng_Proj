@@ -1,10 +1,9 @@
 package Domain;
 
-import javax.print.attribute.standard.Media;
 
 /**
  * Represents a book in the library system.
- * A Book is a type of MediaItem and includes an ISBN number.
+ * A Book is a type of MediaItem and includes an ISBN.
  *
  * <p>Example usage:</p>
  * <pre><code>

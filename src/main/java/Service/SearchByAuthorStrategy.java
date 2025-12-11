@@ -4,7 +4,7 @@ import Domain.Book;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+
 
 /**
  * Searches for books by author name.

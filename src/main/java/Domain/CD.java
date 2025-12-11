@@ -1,6 +1,5 @@
 package Domain;
 
-import Domain.MediaItem;
 
 /**
  * Represents a CD in the library system.

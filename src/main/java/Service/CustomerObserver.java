@@ -1,7 +1,6 @@
 package Service;
 
-import Domain.Book;
-import Domain.Loan;
+
 import Domain.MediaItem;
 import Domain.User;
 

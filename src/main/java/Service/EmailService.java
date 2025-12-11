@@ -1,6 +1,6 @@
 package Service;
 
-import Domain.User;
+
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 import java.util.Properties;

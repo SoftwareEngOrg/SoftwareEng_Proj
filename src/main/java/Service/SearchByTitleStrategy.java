@@ -4,7 +4,7 @@ import Domain.Book;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+
 
 /**
  * Implements the {@link BookSearchStrategy} interface to search for books by their title.
