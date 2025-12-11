@@ -5,9 +5,25 @@ import Service.BookServiceAdmin;
 
 import java.util.Scanner;
 
+/**
+ * User interface class responsible for adding a new CD to the system.
+ * <p>
+ * This class interacts with the administrator service layer to create
+ * a new {@link CD} object and store it along with the desired number of copies.
+ * It collects input from the console, validates it, and forwards the
+ * necessary data to the domain logic.
+ * </p>
+ */
 public class AddCDUI {
+    /** Scanner used to read user input from the console. */
     private Scanner cin = new Scanner(System.in);
 
+    /**
+     * Displays the CD creation form, reads user input, validates the number
+     * of copies, and calls the service layer to add the CD.
+     *
+     * @param service the admin service used to add CDs to the system
+     */
     public void show(BookServiceAdmin service) {
         System.out.println("\n====== Add CD ======");
 

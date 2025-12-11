@@ -12,16 +12,34 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Scanner;
 
-
+/**
+ * User interface for the customer menu in the library system.
+ * <p>
+ * Allows a logged-in customer to browse books and CDs, borrow items,
+ * return items/pay fines, view loans, generate overdue reports, and log out.
+ * </p>
+ *
+ * @since 1.0
+ */
 public class CustomerMenuUI {
+
+    /** Service used for customer operations related to books and CDs. */
     private final BookServiceCustomer bookService = new BookServiceCustomer();
+
+    /** Email helper used for notifications or reports. */
     Doenev di = new Doenev();
 
+    /** Scanner used to read input from the console. */
     private final Scanner scanner = new Scanner(System.in);
 
+    /**
+     * Displays the customer menu for a logged-in user and handles input choices.
+     *
+     * @param loggedInUser the currently logged-in user
+     */
     public void show(User loggedInUser) {
         bookService.setCurrentUser(loggedInUser);
-        bookService.setEmailConfig(di.getUsername() , di.getPassword());
+        bookService.setEmailConfig(di.getUsername(), di.getPassword());
 
         System.out.println("\n====== Welcome " + loggedInUser.getUsername() + " ======\n");
 
@@ -58,11 +76,20 @@ public class CustomerMenuUI {
         }
     }
 
+    /**
+     * Generates and saves the overdue report for the logged-in user to a text file.
+     * <p>
+     * Also displays the report content in the console.
+     * </p>
+     *
+     * @param loggedInUser the currently logged-in user
+     */
     private void printReport(User loggedInUser) {
         if (loggedInUser == null) {
             System.out.println("Error: Not logged in.");
             return;
         }
+
         String filename = loggedInUser.getUsername() + ".txt";
         String reportContent = bookService.generateLoanReport();
 
@@ -76,6 +103,10 @@ public class CustomerMenuUI {
         }
     }
 
+    /**
+     * Displays all available CDs in the library along with their available copies.
+     * Updates availability if no copies remain.
+     */
     private void browseCDs() {
         var cds = bookService.getAllAvailableCDs();
         if (cds.isEmpty()) {
@@ -89,7 +120,6 @@ public class CustomerMenuUI {
             List<MediaCopy> copies = bookService.getCopiesByISBN(cd.getIsbn());
             int availableCount = (int) copies.stream().filter(MediaCopy::isAvailable).count();
 
-            System.out.println(availableCount);
             if (availableCount == 0) {
                 cd.setAvailable(false);
             }
@@ -102,6 +132,10 @@ public class CustomerMenuUI {
         System.out.println("-----------------------");
     }
 
+    /**
+     * Displays all available books in the library along with their available copies.
+     * Updates availability if no copies remain.
+     */
     private void browseBooks() {
         var books = bookService.getAllAvailableBooks();
         if (books.isEmpty()) {
@@ -114,7 +148,6 @@ public class CustomerMenuUI {
         for (Book book : books) {
             List<MediaCopy> copies = bookService.getCopiesByISBN(book.getIsbn());
             int availableCount = (int) copies.stream().filter(MediaCopy::isAvailable).count();
-            System.out.println(availableCount);
 
             if (availableCount == 0) {
                 book.setAvailable(false);
@@ -128,12 +161,19 @@ public class CustomerMenuUI {
         System.out.println("-----------------------");
     }
 
+    /**
+     * Prompts the user to borrow a book or CD by entering its ISBN/ID.
+     */
     private void borrowBook() {
         System.out.print("Enter ISBN of the book to borrow: ");
         String isbn = scanner.nextLine().trim();
         bookService.borrowMediaItem(isbn);
     }
 
+    /**
+     * Handles the return of a borrowed item.
+     * If the item is overdue, prompts the user to pay any fines.
+     */
     private void returnItem() {
         System.out.print("Enter your Loan ID (shown when you borrowed): ");
         String loanId = scanner.nextLine().trim();
@@ -155,5 +195,4 @@ public class CustomerMenuUI {
             }
         }
     }
-
 }

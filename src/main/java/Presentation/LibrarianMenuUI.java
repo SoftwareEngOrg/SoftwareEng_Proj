@@ -1,16 +1,30 @@
 package Presentation;
 
 import Domain.Loan;
-import Service.FileLoanRepository;
 import Service.InputValidator;
 import Service.LibrarianService;
 
 import java.time.LocalDate;
-import java.util.List;
 
+/**
+ * User interface for the librarian menu in the library system.
+ * <p>
+ * Allows librarians to view overdue loans, view all active loans,
+ * search overdue loans by username, and log out.
+ * </p>
+ *
+ * @since 1.0
+ */
 public class LibrarianMenuUI {
+
+    /** Service used for librarian-related operations. */
     private final LibrarianService librarianService = new LibrarianService();
 
+    /**
+     * Displays the librarian menu and handles input selections.
+     * Provides options for viewing overdue loans, active loans,
+     * searching overdue loans by user, and logging out.
+     */
     public void show() {
         while (true) {
             System.out.println("\n====== Librarian Menu ======");
@@ -23,7 +37,6 @@ public class LibrarianMenuUI {
             System.out.print("Choose: ");
             int choice = InputValidator.getValidIntegerInput();
             LocalDate today = LocalDate.now();
-
 
             switch (choice) {
                 case 1 -> viewAllOverdue(today);
@@ -38,6 +51,11 @@ public class LibrarianMenuUI {
         }
     }
 
+    /**
+     * Displays all overdue loans and their fines.
+     *
+     * @param today the current date used to calculate overdue status and fines
+     */
     private void viewAllOverdue(LocalDate today) {
         var overdue = librarianService.getOverdueLoans(today);
 
@@ -64,6 +82,9 @@ public class LibrarianMenuUI {
         System.out.println("TOTAL FINES TO COLLECT: ₪" + totalFine);
     }
 
+    /**
+     * Displays all active loans including overdue status.
+     */
     private void viewAllActiveLoans() {
         var loans = librarianService.getAllActiveLoans();
         if (loans.isEmpty()) {
@@ -78,6 +99,11 @@ public class LibrarianMenuUI {
         }
     }
 
+    /**
+     * Searches for overdue loans for a specific user by username and displays them.
+     *
+     * @param today the current date used to calculate fines and overdue status
+     */
     private void searchOverdueByUser(LocalDate today) {
         System.out.print("Enter username: ");
         String username = new java.util.Scanner(System.in).nextLine().trim();

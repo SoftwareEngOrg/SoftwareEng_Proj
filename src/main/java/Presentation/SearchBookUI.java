@@ -1,4 +1,5 @@
 package Presentation;
+
 import java.util.List;
 import java.util.Scanner;
 
@@ -6,12 +7,27 @@ import Service.BookService;
 import Domain.Book;
 import Service.InputValidator;
 
-public class SearchBookUI
-{
-    Scanner cin = new Scanner(System.in);
+/**
+ * User interface class for searching books in the library system.
+ * <p>
+ * Provides options to search by title, author, or ISBN, and displays
+ * the search results in the console.
+ * </p>
+ *
+ * @since 1.0
+ */
+public class SearchBookUI {
 
-    public void show(BookService bookService)
-    {
+    /** Scanner used to read user input from the console. */
+    private Scanner cin = new Scanner(System.in);
+
+    /**
+     * Displays the search menu and handles user input to search for books.
+     * Uses the provided {@link BookService} to perform searches.
+     *
+     * @param bookService the service used to search for books
+     */
+    public void show(BookService bookService) {
         System.out.println("\n====== Search Book ======");
 
         System.out.println("Search by:");
@@ -23,7 +39,7 @@ public class SearchBookUI
 
         System.out.print("Choose: ");
         int choice = InputValidator.getValidIntegerInput();
-        if(choice == 4)
+        if (choice == 4)
             return;
 
         System.out.print("Enter value: ");
@@ -31,20 +47,15 @@ public class SearchBookUI
 
         List<Book> result = null;
 
-        if (choice == 1)
-        {
+        if (choice == 1) {
             result = bookService.searchByTitle(value);
-        }
-        else if (choice == 2)
-        {
+        } else if (choice == 2) {
             result = bookService.searchByAuthor(value);
-        }
-        else if (choice == 3)
-        {
+        } else if (choice == 3) {
             result = bookService.searchByISBN(value);
-        }
-        else
+        } else {
             return;
+        }
 
         System.out.println("~~~~~~~~~~~~~~~~~~~~");
         System.out.println("Results:");
@@ -52,7 +63,5 @@ public class SearchBookUI
             System.out.println(b);
         }
         System.out.println("========================");
-
     }
-
 }

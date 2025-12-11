@@ -1,17 +1,28 @@
 package Presentation;
 
 import java.util.Scanner;
-
-import Service.BookService;
-import Domain.Book;
 import Service.BookServiceAdmin;
+import Domain.Book;
 
+/**
+ * User interface for adding a new book to the system.
+ * Prompts the user for book details (title, author, ISBN, number of copies)
+ * and uses BookServiceAdmin to add the book.
+ *
+ * @since 1.0
+ */
 public class AddBookUI {
 
     private Scanner cin = new Scanner(System.in);
 
-    public void show(BookServiceAdmin bookService)
-    {
+    /**
+     * Displays the UI for adding a book. Prompts user for book details,
+     * attempts to add the book (with the given number of copies) via the service,
+     * and prints the result message.
+     *
+     * @param bookService the BookServiceAdmin instance used to add the book
+     */
+    public void show(BookServiceAdmin bookService) {
         System.out.println("\n====== Add Book ======");
 
         System.out.print("Book Title: ");
