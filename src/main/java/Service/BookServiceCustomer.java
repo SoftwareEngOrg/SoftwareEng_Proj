@@ -103,15 +103,19 @@ public class BookServiceCustomer extends BookService{
         }
 
 
-        MediaCopy copyToBorrow = availableCopies.get(0);
+        MediaCopy copyToBorrow = availableCopies.getFirst();
         copyToBorrow.setAvailable(false);
         FileMediaCopyRepository.getInstance().saveToFile();
 
 
-        FileBookRepository.getInstance().updateBookAvailability(isbn);
-
-
         Loan loan = loanRepository.borrowItem(currentUser, item);
+
+        if (item instanceof Book) {
+            FileBookRepository.getInstance().updateBookAvailability(isbn);
+        } else if (item instanceof CD) {
+            FileCDRepository.getInstance().updateCDAvailability(isbn);
+        }
+
 
         System.out.println(item.getClass().getSimpleName() + " borrowed successfully!");
         System.out.println("Loan ID: " + loan.getLoanId());

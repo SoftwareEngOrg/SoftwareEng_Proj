@@ -54,7 +54,7 @@ public class FileLoanRepository {
         if (!item.isAvailable()) throw new IllegalStateException("Item is not available");
 
 
-        item.setAvailable(false);
+       /* item.setAvailable(false);
 
 
         if (item instanceof Book) {
@@ -63,7 +63,7 @@ public class FileLoanRepository {
 
         else if (item instanceof CD) {
             FileCDRepository.getInstance().updateCD((CD) item);
-        }
+        }*/
 
 
         Loan loan = new Loan(UUID.randomUUID().toString(), user, item, LocalDate.now());
@@ -80,14 +80,14 @@ public class FileLoanRepository {
 
         loan.returnItem(returnDate != null ? returnDate : LocalDate.now());
 
-        MediaItem item = loan.getMediaItem();
+        /*MediaItem item = loan.getMediaItem();
 
         item.setAvailable(true);
         if (item instanceof Book) {
             FileBookRepository.getInstance().updateBooks((Book) item);
         } else if (item instanceof CD) {
             FileCDRepository.getInstance().updateCD((CD) item);
-        }
+        }*/
 
         saveToFile();
         return true;

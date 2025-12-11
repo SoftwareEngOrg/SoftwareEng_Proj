@@ -78,7 +78,7 @@ class FileLoanRepositoryTest {
     // ============ Basic Functionality Tests ============
 
     @Test
-    @DisplayName("borrowItem creates loan, sets book unavailable, and saves to file")
+    @DisplayName("borrowItem creates loan and saves to file")
     void borrowItem_worksCorrectly() {
         Loan loan = repo.borrowItem(alice, book);
 
@@ -86,7 +86,8 @@ class FileLoanRepositoryTest {
         assertEquals("alice", loan.getUser().getUsername());
         assertEquals("Java", loan.getMediaItem().getTitle());
         assertEquals(LocalDate.now(), loan.getBorrowDate());
-        assertFalse(book.isAvailable());
+
+
         assertEquals(1, repo.getAllActiveLoans().size());
         assertEquals(1, countLines(tempLoansFile));
     }
@@ -192,7 +193,7 @@ class FileLoanRepositoryTest {
     // ============ CD Support Tests ============
 
     @Test
-    @DisplayName("borrowItem with CD updates CD availability correctly")
+    @DisplayName("borrowItem with CD creates loan correctly")
     void borrowItem_withCD_updatesCDAvailability() {
         CD cd = new CD("Greatest Hits", "Artist", "CD-001");
         cd.setAvailable(true);
@@ -203,7 +204,6 @@ class FileLoanRepositoryTest {
 
         newRepo.borrowItem(alice, loadedCD);
 
-        assertFalse(loadedCD.isAvailable());
         assertEquals(1, newRepo.getAllActiveLoans().size());
     }
 
