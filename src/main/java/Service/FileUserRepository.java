@@ -122,7 +122,7 @@ public class FileUserRepository {
 
         } catch (IOException e) {
             System.out.println("Error processing the file.");
-            e.printStackTrace();
+
         }
     }
 
@@ -169,7 +169,7 @@ public class FileUserRepository {
                 return true;
             } catch (IOException e) {
                 System.out.println("Error updating the users file.");
-                e.printStackTrace();
+
             }
         } else {
             System.out.println("User " + username + " not found.");
@@ -204,7 +204,7 @@ public class FileUserRepository {
             return true;
         } catch (IOException e) {
             System.out.println("Error updating the users file.");
-            e.printStackTrace();
+            
             return false;
         }
     }
