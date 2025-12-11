@@ -2,14 +2,17 @@ package Service;
 
 import Domain.*;
 
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BookServiceCustomer extends BookService{
+/**
+ * Service class for managing customer operations related to borrowing, returning,
+ * and viewing loans for books and CDs. It also manages the user's waitlist and loan reports.
+ */
+public class BookServiceCustomer extends BookService {
 
     private  FileLoanRepository loanRepository = new FileLoanRepository();
     private  FileBookRepository fileBook = FileBookRepository.getInstance();
@@ -20,24 +23,49 @@ public class BookServiceCustomer extends BookService{
     private String emailPass;
     private static BookServiceCustomer instance;
 
+    /**
+     * Sets the current logged-in user.
+     *
+     * @param user the User object to set as the current user.
+     */
     public void setCurrentUser(User user) {
         this.currentUser = user;
     }
 
+    /**
+     * Constructor with email configuration for sending notifications.
+     *
+     * @param emailUser the email username for notification service.
+     * @param emailPass the email password for notification service.
+     */
     public BookServiceCustomer(String emailUser, String emailPass) {
         this.emailUser = emailUser;
         this.emailPass = emailPass;
     }
 
+    /**
+     * Default constructor.
+     */
     public BookServiceCustomer() {}
 
+    /**
+     * Sets the email configuration for sending notifications.
+     *
+     * @param emailUser the email username.
+     * @param emailPass the email password.
+     */
     public void setEmailConfig(String emailUser, String emailPass) {
         this.emailUser = emailUser;
         this.emailPass = emailPass;
     }
 
+    /**
+     * Borrows a media item (book or CD) identified by ISBN.
+     *
+     * @param isbn the ISBN of the media item to borrow.
+     * @return true if the borrowing is successful, false otherwise.
+     */
     public boolean borrowMediaItem(String isbn) {
-
         if (isbn == null || isbn.trim().isEmpty()) {
             System.out.println("Error: ISBN is null or empty.");
             return false;
@@ -54,12 +82,10 @@ public class BookServiceCustomer extends BookService{
             return false;
         }
 
-
         List<MediaCopy> availableCopies = FileMediaCopyRepository.getInstance()
                 .getCopiesByIsbn(isbn).stream()
                 .filter(MediaCopy::isAvailable)
                 .toList();
-
 
         if (availableCopies.isEmpty()) {
             System.out.println(item.getClass().getSimpleName() + " is currently borrowed.");
@@ -70,7 +96,6 @@ public class BookServiceCustomer extends BookService{
                 return false;
             }
 
-
             waitList.putIfAbsent(isbn, new ArrayList<>());
             if (!waitList.get(isbn).contains(currentUser)) {
                 waitList.get(isbn).add(currentUser);
@@ -79,14 +104,12 @@ public class BookServiceCustomer extends BookService{
                 System.out.println("You are already on the waitlist.");
             }
 
-
             EmailService es = new EmailService(this.emailUser, this.emailPass);
             CustomerObserver observer = new CustomerObserver(currentUser, es, this);
             BookInventory.getInstance().addObserver(observer);
 
             return false;
         }
-
 
         LocalDate today = LocalDate.now();
         List<Loan> activeLoans = loanRepository.getActiveLoansForUser(currentUser.getUsername());
@@ -99,11 +122,9 @@ public class BookServiceCustomer extends BookService{
             return false;
         }
 
-
-        MediaCopy copyToBorrow = availableCopies.getFirst();
+        MediaCopy copyToBorrow = availableCopies.get(0);
         copyToBorrow.setAvailable(false);
         FileMediaCopyRepository.getInstance().saveToFile();
-
 
         Loan loan = loanRepository.borrowItem(currentUser, item);
 
@@ -112,7 +133,6 @@ public class BookServiceCustomer extends BookService{
         } else if (item instanceof CD) {
             FileCDRepository.getInstance().updateCDAvailability(isbn);
         }
-
 
         System.out.println(item.getClass().getSimpleName() + " borrowed successfully!");
         System.out.println("Loan ID: " + loan.getLoanId());
@@ -124,6 +144,12 @@ public class BookServiceCustomer extends BookService{
         return true;
     }
 
+    /**
+     * Returns a borrowed item based on the loan ID.
+     *
+     * @param loanId the Loan ID for the borrowed item.
+     * @return true if the item is successfully returned, false otherwise.
+     */
     public boolean returnBook(String loanId) {
         LocalDate today = LocalDate.now();
         Loan loan = loanRepository.findLoanById(loanId);
@@ -164,8 +190,13 @@ public class BookServiceCustomer extends BookService{
         return true;
     }
 
+    /**
+     * Completes the return of a borrowed item and handles overdue fines.
+     *
+     * @param loanId the Loan ID for the borrowed item.
+     * @return true if the return is completed successfully, false otherwise.
+     */
     public boolean completeReturn(String loanId) {
-
         LocalDate today = LocalDate.now();
         Loan loan = loanRepository.findLoanById(loanId);
 
@@ -195,6 +226,11 @@ public class BookServiceCustomer extends BookService{
         return true;
     }
 
+    /**
+     * Updates the availability of a media copy upon return.
+     *
+     * @param loan the Loan object for which the copy is being returned.
+     */
     private void returnCopyByLoan(Loan loan) {
         String isbn = loan.getMediaItem().getIsbnOrId();
         List<MediaCopy> copies = FileMediaCopyRepository.getInstance().getCopiesByIsbn(isbn);
@@ -211,6 +247,9 @@ public class BookServiceCustomer extends BookService{
         System.out.println("Error: No borrowed copy found to return.");
     }
 
+    /**
+     * Displays the active loans of the current user.
+     */
     public void viewMyLoans() {
         if (currentUser == null) {
             System.out.println("Not logged in.");
@@ -233,17 +272,20 @@ public class BookServiceCustomer extends BookService{
         int totalFine = 0;
 
         totalFine += displayLoanType(bookLoans, today, "BOOK LOANS");
-
-
         totalFine += displayLoanType(cdLoans, today, "CD LOANS");
-
 
         if (totalFine > 0) {
             System.out.println("\n Total fine owed: ₪" + totalFine);
         }
     }
 
-
+    /**
+     * Categorizes the user's active loans into books and CDs.
+     *
+     * @param myLoans the list of all active loans of the user.
+     * @param bookLoans the list to store book loans.
+     * @param cdLoans the list to store CD loans.
+     */
     private void categorizeLoans(List<Loan> myLoans, List<Loan> bookLoans, List<Loan> cdLoans) {
         for (Loan loan : myLoans) {
             if (loan.getMediaItem() instanceof Book) {
@@ -254,6 +296,14 @@ public class BookServiceCustomer extends BookService{
         }
     }
 
+    /**
+     * Displays a list of loans of a given type (books or CDs) and calculates the total fine.
+     *
+     * @param loans the list of loans to display.
+     * @param today the current date used to check overdue status and calculate fines.
+     * @param loanType the type of loan (e.g., "BOOK LOANS" or "CD LOANS").
+     * @return the total fine for the displayed loans.
+     */
     private int displayLoanType(List<Loan> loans, LocalDate today, String loanType) {
         int totalFine = 0;
 
@@ -277,6 +327,11 @@ public class BookServiceCustomer extends BookService{
         return totalFine;
     }
 
+    /**
+     * Retrieves all available books from the book repository.
+     *
+     * @return a list of available books.
+     */
     public List<Book> getAllAvailableBooks() {
         List<Book> allBooks = fileBook.findAllBooks();
         List<Book> availableBooks = new ArrayList<>();
@@ -294,6 +349,11 @@ public class BookServiceCustomer extends BookService{
         return availableBooks;
     }
 
+    /**
+     * Retrieves all available CDs from the CD repository.
+     *
+     * @return a list of available CDs.
+     */
     public List<CD> getAllAvailableCDs() {
         List<CD> allCDs = fileCD.findAllCDs();
         List<CD> availableCDs = new ArrayList<>();
@@ -311,6 +371,12 @@ public class BookServiceCustomer extends BookService{
         return availableCDs;
     }
 
+    /**
+     * Finds a media item (book or CD) by its ISBN.
+     *
+     * @param isbn the ISBN of the media item to find.
+     * @return the MediaItem if found, otherwise null.
+     */
     public MediaItem findMediaByIsbn(String isbn) {
         Book book = fileBook.findByIsbn(isbn);
         if (book != null) {
@@ -323,6 +389,11 @@ public class BookServiceCustomer extends BookService{
         return null;
     }
 
+    /**
+     * Generates a loan report for the current user, showing active loans and fines.
+     *
+     * @return the loan report as a string.
+     */
     public String generateLoanReport() {
         if (currentUser == null) {
             return "Not logged in.";
@@ -369,6 +440,15 @@ public class BookServiceCustomer extends BookService{
         return report.toString();
     }
 
+    /**
+     * Processes and adds loan information to the loan report.
+     *
+     * @param report the StringBuilder where the report is being constructed.
+     * @param loans the list of loans to process.
+     * @param today the current date used for fine calculation.
+     * @param loanType the type of loan (e.g., "BOOK LOANS" or "CD LOANS").
+     * @return the total fine for the loans.
+     */
     private int processLoanType(StringBuilder report, List<Loan> loans, LocalDate today, String loanType) {
         int totalFine = 0;
 
@@ -391,35 +471,14 @@ public class BookServiceCustomer extends BookService{
         return totalFine;
     }
 
-   /* public List<MediaCopy> getCopiesByISBN(String isbn) {
-        List<MediaCopy> copies = new ArrayList<>();
-
-        MediaItem item = findMediaByIsbn(isbn);
-        if (item == null) return copies;
-
-        try (BufferedReader br = new BufferedReader(new FileReader("media_copies.txt"))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(";");
-                if (parts.length < 3) continue;
-
-                String copyId = parts[0];
-                String copyIsbn = parts[1];
-                boolean available = Boolean.parseBoolean(parts[2]);
-
-                if (copyIsbn.equals(isbn)) {
-                    copies.add(new MediaCopy(copyId, item, available));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return copies;
-    }*/
-
+    /**
+     * Retrieves the list of copies of a media item by its ISBN.
+     *
+     * @param isbn the ISBN of the media item.
+     * @return the list of MediaCopy objects for the given ISBN.
+     */
     public List<MediaCopy> getCopiesByISBN(String isbn) {
         return FileMediaCopyRepository.getInstance().getCopiesByIsbn(isbn);
     }
-
 }
+
