@@ -27,7 +27,7 @@ public abstract class MediaItem {
      * @param title  the title of the media item
      * @param author the author or creator of the media item
      */
-    public MediaItem(String title, String author) {
+    protected MediaItem(String title, String author) {
         this.title = title;
         this.author = author;
         this.available = true;

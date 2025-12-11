@@ -15,11 +15,17 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.organization>softwareengorg</sonar.organization>
         <sonar.projectKey>SoftwareEngOrg_SoftwareEng_Proj</sonar.projectKey>
+        <!-- Only calculate coverage for Service package -->
         <sonar.coverage.exclusions>
             **/Presentation/**,
             **/Domain/**,
             **/resources/**
         </sonar.coverage.exclusions>
+
+        <!-- Suppress System.out warnings -->
+        <sonar.issue.ignore.multicriteria>e1</sonar.issue.ignore.multicriteria>
+        <sonar.issue.ignore.multicriteria.e1.ruleKey>java:S106</sonar.issue.ignore.multicriteria.e1.ruleKey>
+        <sonar.issue.ignore.multicriteria.e1.resourceKey>**/*.java</sonar.issue.ignore.multicriteria.e1.resourceKey>
     </properties>
 
 
